@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+import time
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -18,6 +19,9 @@ key = os.getenv('SUPABASE_KEY')
 
 supabase: Client = create_client(url, key)
 app = Flask(__name__)
+
+cnaes_turismo = [7911200, 7912100]
+cnaes_eventos = [8230001]
 
 class UserType(BaseModel):
     id: int
@@ -121,7 +125,10 @@ def add_user():
             # não é turista: cnpj é requerido
             if not user.cnpj:
                 return jsonify({"error": "Campos requeridos faltando: CNPJ"}), 400
-
+            
+            # limpeza no cnpj (tirando pontuações)
+            user.cnpj = ''.join(filter(str.isdigit, user.cnpj))
+            
             # api do brasil api para buscar cep
             tentativas = 0
             resultado_api = None
@@ -134,25 +141,25 @@ def add_user():
 
                 if resultado_api.status_code != 200:
                     resultado_api = None
+                    time.sleep(1)  # espera um pouco antes de tentar novamente
                     continue
-
-                resultado_api = resultado_api.json
-                return jsonify(resultado_api), 200
-                # if user.type_id == 2 and resultado_api.get('cnae_fiscal') != 7912100:
-                #     return jsonify({"error": "CNPJ não é de um guia turístico"}), 400
-                # if user.type_id == 3 and resultado_api.get('cnae_fiscal') != 8230001:
-                #     return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
+                
+                resultado_api = resultado_api.json()
+                if user.type_id == 2 and resultado_api.get('cnae_fiscal') not in cnaes_turismo:
+                    return jsonify({"error": "CNPJ não é de um guia turístico"}), 400
+                if user.type_id == 3 and resultado_api.get('cnae_fiscal') not in cnaes_eventos:
+                    return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
 
         # salvar no banco
-        return supabase.table("user").insert(user.dict_not_null()).execute().data
+        return supabase.table("user").insert(user.dict_not_null()).execute().data, 201
     except Exception as e:
         return {"erro": str(e)}, 400
 
 NGROK_TOKEN = os.getenv('NGROK_AUTHTOKEN')
 ngrok.set_auth_token(NGROK_TOKEN)
+ngrok.kill()  # mata conexões anteriores, se existirem
 listener = ngrok.connect(5000)
 print(f"Ngrok URL: {listener.public_url}")
 
 if __name__ == "__main__":
     app.run(port=5000)
-    
