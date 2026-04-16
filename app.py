@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request, jsonify
 from supabase import create_client, Client
 
 load_dotenv()
@@ -13,7 +13,15 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    return "Hello World!"
+    # verificar conexão com o supabase
+    try:
+        response = supabase.rpc("health_check").execute()
+        if response.data == 1:
+            return jsonify({"database": "online"})
+        else:
+            return jsonify({"database": "offline"})
+    except Exception as e:
+        return f"Erro ao conectar com o Supabase: {e}"
 
 if __name__ == "__main__":
     # o host deve ser '0.0.0.0' para que o app seja acessível fora do container
