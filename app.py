@@ -9,6 +9,7 @@ import queue
 import threading
 import requests
 import bcrypt
+from pyngrok import ngrok
 
 load_dotenv()
 
@@ -147,6 +148,11 @@ def add_user():
     except Exception as e:
         return {"erro": str(e)}, 400
 
+NGROK_TOKEN = os.getenv('NGROK_AUTHTOKEN')
+ngrok.set_auth_token(NGROK_TOKEN)
+listener = ngrok.connect(5000)
+print(f"Ngrok URL: {listener.public_url}")
+
 if __name__ == "__main__":
-    # o host deve ser '0.0.0.0' para que o app seja acessível fora do container
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(port=5000)
+    

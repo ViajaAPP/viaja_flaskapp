@@ -56,7 +56,7 @@ $env:FLASK_ENV = "development"
 
 ## Executar em desenvolvimento
 ```bash
-flask run --host=0.0.0.0 --port=5000
+flask run --host=0.0.0.0 --port=5000 --debug
 ```
 ou (caso use `python` diretamente)
 ```bash
