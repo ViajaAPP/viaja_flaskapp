@@ -1,9 +1,9 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, logging
 import time
 from datetime import datetime, timedelta, timezone
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ValidationError
 from typing import Optional
 from supabase import create_client, Client
 import queue
@@ -26,9 +26,19 @@ app = Flask(__name__)
 cnaes_turismo = [7911200, 7912100]
 cnaes_eventos = [8230001]
 
-class UserType(BaseModel):
-    id: int
-    name: str
+def buscar_cnpj(cnpj: str, tentativas: int = 3) -> Optional[dict]:
+    for _ in range(tentativas):
+        resp = requests.get(f"https://brasilapi.com.br/api/cnpj/v1/{cnpj}", timeout=5)
+        if resp.status_code == 200:
+            return resp.json()
+        if resp.status_code == 400:
+            return None  # CNPJ inválido, não tenta de novo
+        time.sleep(5)  # espera antes de tentar novamente
+    return None
+
+class UserRole(BaseModel):
+    cod: str
+    description: Optional[str] = None
 
 class UserModel(BaseModel):
     id: Optional[int] = None
@@ -36,7 +46,7 @@ class UserModel(BaseModel):
     email: EmailStr
     password: str
     phone: str
-    type_id: int
+    role: Optional[str] = None
     cnpj: Optional[str] = None
 
     def dict(self, *args, **kwargs):
@@ -103,60 +113,47 @@ def hello():
     except Exception as e:
         return f"Erro ao conectar com o Supabase: {e}"
 
-@app.route('/message', methods=['POST'])
-def send_message():
-    dados = request.json
-    if not dados.get('content') or not dados.get('chat_id') or not dados.get('user_id'):
-        return jsonify({"error": "Campos requeridos faltando"}), 400
-
-    # a view apenas repassa para o controller (via queue)
-    msg_queue.put(dados)
-    return jsonify({"status": "Mensagem enviada à fila"}), 202
-
 @app.route('/register', methods=['POST'])
 def add_user():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Body ausente"}), 400
+    
+    # fazer hash da password
+    password = data.get('password')
+    if not password:
+        return jsonify({"error": "Password obrigatório"}), 400
+    
+    data = data.copy()
+    data['password'] = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    
     try:
-        # fazer hash da password
-        password = request.json.get('password')
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        request.json['password'] = hashed_password.decode('utf-8')
-        user = UserModel(**request.json)
-        if not user.dict():
-            return jsonify({"error": "Campos requeridos faltando"}), 400
+        user = UserModel(**data)
+    except ValidationError as e:
+        return jsonify({"error": f"Dados de usuário inválidos: {e}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Erro ao criar usuário: {e}"}), 400
 
-        if user.type_id != 1:
-            # não é turista: cnpj é requerido
-            if not user.cnpj:
-                return jsonify({"error": "Campos requeridos faltando: CNPJ"}), 400
+    if user.role and user.role != "TOURIST":
+        if not user.cnpj: # não é turista: cnpj é requerido
+            return jsonify({"error": "Campos requeridos faltando: CNPJ"}), 400
 
-            # limpeza no cnpj (tirando pontuações)
-            user.cnpj = ''.join(filter(str.isdigit, user.cnpj))
+        # limpeza no cnpj (tirando pontuações)
+        user.cnpj = ''.join(filter(str.isdigit, user.cnpj))
+        resultado = buscar_cnpj(user.cnpj)
 
-            # api do brasil api para buscar cep
-            tentativas = 0
-            resultado_api = None
-            while resultado_api is None and tentativas < 4:
-                tentativas += 1
-                resultado_api = requests.get(f"https://brasilapi.com.br/api/cnpj/v1/{user.cnpj}")
-                # se deu erro 400, retorna erro geral
-                if resultado_api.status_code == 400:
-                    return jsonify({"error": "CNPJ Inválido"}), 400
-
-                if resultado_api.status_code != 200:
-                    resultado_api = None
-                    time.sleep(1)  # espera um pouco antes de tentar novamente
-                    continue
-
-                resultado_api = resultado_api.json()
-                if user.type_id == 2 and resultado_api.get('cnae_fiscal') not in cnaes_turismo:
-                    return jsonify({"error": "CNPJ não é de um guia turístico"}), 400
-                if user.type_id == 3 and resultado_api.get('cnae_fiscal') not in cnaes_eventos:
-                    return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
-
-        # salvar no banco
+        if resultado is None:
+            return jsonify({"error": "CNPJ inválido ou inacessível"}), 400
+        if user.role == "GUIDE" and resultado.get('cnae_fiscal') not in cnaes_turismo:
+            return jsonify({"error": "CNPJ não é de um guia turístico"}), 400
+        if user.role == "EVENT_PROMOTER" and resultado.get('cnae_fiscal') not in cnaes_eventos:
+            return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
+        
+    try:
         return supabase.table("user").insert(user.dict_not_null()).execute().data, 201
     except Exception as e:
-        return {"erro": str(e)}, 400
+        logging.exception(e)
+        return jsonify({"error": "Erro ao salvar usuário"}), 500
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -184,6 +181,16 @@ def login():
         algorithm="HS256"
     )
     return jsonify(token=token)
+
+@app.route('/message', methods=['POST'])
+def send_message():
+    dados = request.json
+    if not dados.get('content') or not dados.get('chat_id') or not dados.get('user_id'):
+        return jsonify({"error": "Campos requeridos faltando"}), 400
+
+    # a view apenas repassa para o controller (via queue)
+    msg_queue.put(dados)
+    return jsonify({"status": "Mensagem enviada à fila"}), 202
 
 NGROK_TOKEN = os.getenv('NGROK_AUTHTOKEN')
 ngrok.set_auth_token(NGROK_TOKEN)
