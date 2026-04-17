@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from supabase import create_client, Client
@@ -10,12 +10,15 @@ import queue
 import threading
 import requests
 import bcrypt
+import jwt
+import platform
 from pyngrok import ngrok
 
 load_dotenv()
 
 url = os.getenv('SUPABASE_URL')
 key = os.getenv('SUPABASE_KEY')
+AUTH_CRYPT_KEY = os.getenv('AUTH_CRYPT_KEY')
 
 supabase: Client = create_client(url, key)
 app = Flask(__name__)
@@ -110,7 +113,7 @@ def send_message():
     msg_queue.put(dados)
     return jsonify({"status": "Mensagem enviada à fila"}), 202
 
-@app.route('/user', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def add_user():
     try:
         # fazer hash da password
@@ -125,10 +128,10 @@ def add_user():
             # não é turista: cnpj é requerido
             if not user.cnpj:
                 return jsonify({"error": "Campos requeridos faltando: CNPJ"}), 400
-            
+
             # limpeza no cnpj (tirando pontuações)
             user.cnpj = ''.join(filter(str.isdigit, user.cnpj))
-            
+
             # api do brasil api para buscar cep
             tentativas = 0
             resultado_api = None
@@ -143,7 +146,7 @@ def add_user():
                     resultado_api = None
                     time.sleep(1)  # espera um pouco antes de tentar novamente
                     continue
-                
+
                 resultado_api = resultado_api.json()
                 if user.type_id == 2 and resultado_api.get('cnae_fiscal') not in cnaes_turismo:
                     return jsonify({"error": "CNPJ não é de um guia turístico"}), 400
@@ -155,9 +158,46 @@ def add_user():
     except Exception as e:
         return {"erro": str(e)}, 400
 
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+    if not data:
+        return jsonify(message="Dados de login não fornecidos!"), 400
+    if "email" not in data or "password" not in data:
+        return jsonify(message="Campos 'email' e 'password' são obrigatórios!"), 400
+
+    try:
+        supabase_response = supabase.table("user").select("user_id, email, password").eq("email", data["email"]).execute()
+        if not supabase_response.data:
+            return jsonify(message="Credenciais inválidas!"), 401
+        user = supabase_response.data[0]
+    except Exception as e:
+        return jsonify(message=f"Erro ao buscar usuário no banco de dados: {e}"), 500
+
+    if not bcrypt.checkpw(data["password"].encode('utf-8'), user["password"].encode('utf-8')):
+        return jsonify(message="Credenciais inválidas!"), 401
+
+    # Gerar o token com expiração
+    token = jwt.encode(
+        {"user_id": user['user_id'], "exp": datetime.now(timezone.utc) + timedelta(minutes=30)},
+        AUTH_CRYPT_KEY,
+        algorithm="HS256"
+    )
+    return jsonify(token=token)
+
 NGROK_TOKEN = os.getenv('NGROK_AUTHTOKEN')
 ngrok.set_auth_token(NGROK_TOKEN)
-ngrok.kill()  # mata conexões anteriores, se existirem
+def force_kill_ngrok():
+    try:
+        if platform.system() == "Windows":
+            os.system("taskkill /f /im ngrok.exe >nul 2>&1")
+        else:
+            os.system("killall -9 ngrok >/dev/null 2>&1")
+    except:
+        pass
+
+force_kill_ngrok()
+
 listener = ngrok.connect(5000)
 print(f"Ngrok URL: {listener.public_url}")
 
