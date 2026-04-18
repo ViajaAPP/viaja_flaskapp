@@ -1,81 +1,134 @@
-# Viajá FlaskAPP
+# README — API Flask (`viaja_flaskapp`)
 
-Instruções mínimas para preparar e executar a aplicação Flask neste diretório.
+## Visão geral
+Esta API foi construída com **Flask** e organizada para facilitar:
+- execução em outros ambientes;
+- evolução de **modelos** e **rotas**;
+- separação de responsabilidades por camadas.
 
-## Pré-requisitos
-- Python 3.8+ instalado
-- pip disponível
-- (Opcional) git
+---
 
-## Instalação (ambiente virtual recomendado)
+## Requisitos
+- Python **3.9+**
+- `pip`
+- Git
+- Banco de dados configurado via variáveis de ambiente (ex.: SQLite/PostgreSQL)
 
-Linux / macOS:
+---
+
+## Como reproduzir a API em outro computador
+
+## 1) Clonar o projeto
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt  # se existir
+git clone https://github.com/sweetsoph/viaja_flaskapp.git
+cd viaja_flaskapp
 ```
 
-Windows (CMD):
-```cmd
-python -m venv venv
-venv\Scripts\activate
-pip install --upgrade pip
+## 2) Criar e ativar ambiente virtual
+### Windows (PowerShell)
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### Linux/macOS
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+## 3) Instalar dependências
+```bash
 pip install -r requirements.txt
 ```
 
-Windows (PowerShell):
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install --upgrade pip
-pip install -r requirements.txt
+## 4) Configurar variáveis de ambiente
+Criar arquivo `.env` na raiz (exemplo):
+```env
+SUPABASE_URL=<supabase_url>
+SUPABASE_KEY=<supabase_key>
+NGROK_AUTHTOKEN=<ngrok_authtoken>
+AUTH_CRYPT_KEY=<auth_crypt_key>
 ```
 
-## Variáveis de ambiente
-Defina a variável que aponta para a aplicação Flask. Substitua `app.py` ou `viaja:app` conforme o ponto de entrada do seu projeto.
-
-Linux / macOS:
+## 5) Iniciar a API
 ```bash
-export FLASK_APP=app.py        # ou export FLASK_APP=viaja:create_app
-export FLASK_ENV=development  # opcional, modo dev
+python run.py
+```
+API disponível em: `http://127.0.0.1:5000` ou na URL do Ngrok.
+
+---
+
+## Estrutura sugerida do projeto
+```text
+viaja_flaskapp/
+├─ app/
+│  ├─ __init__.py          # factory da aplicação
+│  ├─ config.py            # configurações por ambiente
+│  ├─ models/              # entidades do banco
+│  ├─ routes/              # blueprints/endpoints
+│  ├─ services/            # regras de negócio
+├─ requirements.txt
+└─ README.md
 ```
 
-Windows (CMD):
-```cmd
-set FLASK_APP=app.py
-set FLASK_ENV=development
+---
+
+## Como adicionar novos modelos
+
+1. Criar arquivo em `app/models/` (ex.: `destino.py`).
+2. Definir a classe do modelo.
+3. Registrar/importar o modelo onde necessário.
+
+---
+
+## Como adicionar novas rotas
+
+1. Criar blueprint em `app/routes/` (ex.: `destinos.py`).
+2. Definir endpoints e métodos HTTP.
+3. Registrar blueprint no `create_app()`.
+
+Exemplo:
+```python
+# app/routes/destinos.py
+from flask import Blueprint, jsonify
+bp = Blueprint("destinos", __name__, url_prefix="/destinos")
+
+@bp.get("/")
+def listar_destinos():
+    return jsonify([])
 ```
 
-Windows (PowerShell):
-```powershell
-$env:FLASK_APP = "app.py"
-$env:FLASK_ENV = "development"
+Registro:
+```python
+# app/__init__.py
+from app.routes.destinos import bp as destinos_bp
+app.register_blueprint(destinos_bp)
 ```
 
-## Executar em desenvolvimento
-```bash
-flask run --host=0.0.0.0 --port=5000 --debug
-```
-ou (caso use `python` diretamente)
-```bash
-python -m flask run
-```
+---
 
-## Executar em produção (exemplo com gunicorn, Linux)
-Instale gunicorn:
-```bash
-pip install gunicorn
-```
-Execute:
-```bash
-gunicorn -w 4 -b 0.0.0.0:8000 app:app   # ajuste "app:app" conforme seu módulo/objeto
-```
+## Serviços Utilizados e Criados
 
-## Observações
-- Ajuste os nomes de arquivos e o valor de FLASK_APP conforme a estrutura do projeto (ex.: `viaja:app` ou factory `viaja:create_app()`).
-- Se o repositório tiver um `Procfile`, `dockerfile` ou instruções adicionais, siga-os para deploy em plataformas específicas.
-- Para problemas com dependências, recrie o virtualenv e reinstale.
+- **Supabase**: banco de dados e autenticação.
+- **Ngrok**: exposição local para testes externos.
+- **Flask**: framework web leve e flexível.
+- **BrasilAPI**: validação de CNPJ para promotores de eventos.
+- **Pydantic**: validação e parsing de dados.
+- **Message Worker (Criado)**: processamento assíncrono de mensagens (ex.: fila de mensagens do chat).
 
-Se precisar, posso gerar um exemplo de `requirements.txt` ou detectar automaticamente o ponto de entrada se você listar os arquivos do diretório.
+---
+
+## Design patterns de arquitetura usados
+
+- **Application Factory**: inicialização do Flask via função `create_app()`.
+- **Blueprints**: modularização de rotas por domínio.
+- **DTO/Schema**: validação e serialização de dados.
+
+---
+
+## Contribuição
+1. Criar branch de feature.
+2. Implementar com testes.
+3. Abrir Pull Request com descrição objetiva.
+4. Aguardar revisão.
