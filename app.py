@@ -13,6 +13,7 @@ import bcrypt
 import jwt
 import platform
 from pyngrok import ngrok
+from functools import wraps
 
 load_dotenv()
 
@@ -69,6 +70,18 @@ class MessageModel(BaseModel):
     chat_id: int
     user_id: int
 
+class TourCreateModel(BaseModel):
+    created_by_id: int
+    title: str
+    description: Optional[str] = None
+    price: float
+    estimated_duration_minutes: int
+    meeting_point: str
+    
+class TourModel(TourCreateModel):
+    id: int
+    created_at: datetime
+
 msg_queue = queue.Queue()
 
 def message_processor():
@@ -98,6 +111,32 @@ def message_processor():
 
 # inicia o serviço em background
 threading.Thread(target=message_processor, daemon=True).start()
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # verifica se o header existe
+        auth_header = request.headers.get("Authorization")
+        
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"message": "Token é necessário ou malformado!"}), 401
+        
+        try:
+            # extrai e decodifica o token
+            token = auth_header.split(" ")[1]
+            data = jwt.decode(token, AUTH_CRYPT_KEY, algorithms=["HS256"])
+            # adiciona os dados do usuário no contexto da requisição
+            current_user = {"user_id": data["user_id"], "role": data.get("role")}
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token expirado!"}), 401
+        except Exception:
+            return jsonify({"message": "Token inválido!"}), 401
+
+        # passa o usuário logado para a função da rota
+        return f(current_user, *args, **kwargs)
+
+    return decorated
 
 @app.route('/')
 def hello():
@@ -164,7 +203,7 @@ def login():
         return jsonify(message="Campos 'email' e 'password' são obrigatórios!"), 400
 
     try:
-        supabase_response = supabase.table("user").select("user_id, email, password").eq("email", data["email"]).execute()
+        supabase_response = supabase.table("user").select("user_id, email, password, role").eq("email", data["email"]).execute()
         if not supabase_response.data:
             return jsonify(message="Credenciais inválidas!"), 401
         user = supabase_response.data[0]
@@ -176,11 +215,42 @@ def login():
 
     # Gerar o token com expiração
     token = jwt.encode(
-        {"user_id": user['user_id'], "exp": datetime.now(timezone.utc) + timedelta(minutes=30)},
+        {"user_id": user['user_id'], "role": user['role'], "exp": datetime.now(timezone.utc) + timedelta(minutes=30)},
         AUTH_CRYPT_KEY,
         algorithm="HS256"
     )
     return jsonify(token=token)
+
+@app.route('/tour', methods=['POST'])
+@token_required
+def create_tour(current_user):
+    # role do current_user deve ser GUIDE
+    role = current_user.get('role')
+    if role != "GUIDE":
+        return jsonify({"error": "Acesso negado: apenas guias podem criar tours"}), 403
+    
+    # recupera dados do tour
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados do tour não fornecidos!"}), 400
+    
+    if not all([data.get('title'), data.get('price'), data.get('estimated_duration_minutes'), data.get('meeting_point')]):
+        return jsonify({"error": "Campos obrigatórios faltando! Campos: title, price, estimated_duration_minutes, meeting_point"}), 400
+    
+    try:
+        tour = TourCreateModel(
+            created_by_id=current_user['user_id'],
+            title=data.get('title'),
+            description=data.get('description'),
+            price=data.get('price'),
+            estimated_duration_minutes=data.get('estimated_duration_minutes'),
+            meeting_point=data.get('meeting_point')
+        )
+        supabase.table("tour").insert(tour.dict()).execute()
+        return jsonify({"message": "Tour criado com sucesso!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Erro ao criar tour: {e}"}), 500
 
 @app.route('/message', methods=['POST'])
 def send_message():
