@@ -1,0 +1,69 @@
+from flask import Blueprint, request, jsonify, current_app
+from app.services.supabase_service import supabase
+from app.models.tour_models import TourCreateModel
+from app.utils.auth import token_required
+
+tour_bp = Blueprint('tour', __name__)
+
+@tour_bp.route('/', methods=['POST'])
+@token_required
+def create_tour(current_user):
+    """
+    Criar um novo tour
+    ---
+    tags:
+        - Tours
+    security:
+        - BearerAuth: []
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        title:
+                            type: string
+                        description:
+                            type: string
+                        price:
+                            type: number
+                        estimated_duration_minutes:
+                            type: integer
+                        meeting_point:
+                            type: string
+    responses:
+        201:
+            description: Tour criado com sucesso
+        400:
+            description: Dados do tour ausentes ou inválidos
+        500:
+            description: Erro ao criar tour
+    """
+    # role do current_user deve ser GUIDE
+    role = current_user.get('role')
+    if role != "GUIDE":
+        return jsonify({"error": "Acesso negado: apenas guias podem criar tours"}), 403
+    
+    # recupera dados do tour
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados do tour não fornecidos!"}), 400
+    
+    if not all([data.get('title'), data.get('price'), data.get('estimated_duration_minutes'), data.get('meeting_point')]):
+        return jsonify({"error": "Campos obrigatórios faltando! Campos: title, price, estimated_duration_minutes, meeting_point"}), 400
+    
+    try:
+        tour = TourCreateModel(
+            created_by_id=current_user['user_id'],
+            title=data.get('title'),
+            description=data.get('description'),
+            price=data.get('price'),
+            estimated_duration_minutes=data.get('estimated_duration_minutes'),
+            meeting_point=data.get('meeting_point')
+        )
+        supabase.table("tour").insert(tour.dict()).execute()
+        return jsonify({"message": "Tour criado com sucesso!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Erro ao criar tour: {e}"}), 500
