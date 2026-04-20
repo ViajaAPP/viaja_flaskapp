@@ -77,10 +77,11 @@ def add_user():
             return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
         
     try:
-        supabase_response = supabase.table("user").insert(user.dict()).execute()
-        if not supabase_response.data:
+        response = supabase.table("user").insert(user.dict()).execute()
+        user_data = response.data
+        if not user_data:
             return jsonify({"error": "Erro ao salvar usuário no banco de dados"}), 500
-        return jsonify({"message": "Usuário criado com sucesso"}), 201
+        return jsonify({"message": "Usuário criado com sucesso", "user_id": user_data[0]['user_id']}), 201
     except Exception as e:
         current_app.logger.exception(e)
         return jsonify({"error": "Erro ao salvar usuário"}), 500

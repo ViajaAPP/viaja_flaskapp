@@ -62,8 +62,11 @@ def create_tour(current_user):
             estimated_duration_minutes=data.get('estimated_duration_minutes'),
             meeting_point=data.get('meeting_point')
         )
-        supabase.table("tour").insert(tour.dict()).execute()
-        return jsonify({"message": "Tour criado com sucesso!"}), 201
+        response = supabase.table("tour").insert(tour.dict()).execute()
+        tour_data = response.data
+        if not tour_data:
+            return jsonify({"error": "Erro ao criar tour!"}), 500
+        return jsonify({"message": "Tour criado com sucesso!", "tour_id": tour_data[0]['id']}), 201
 
     except Exception as e:
         return jsonify({"error": f"Erro ao criar tour: {e}"}), 500
@@ -138,8 +141,11 @@ def create_tour_instance(current_user, tour_id):
             start_time=data.get('start_time'),
             max_capacity=data.get('max_capacity')
         )
-        supabase.table("tour_instance").insert(tour_instance.model_dump(mode='json')).execute()
-        return jsonify({"message": "Instância de tour criada com sucesso!"}), 201
+        response = supabase.table("tour_instance").insert(tour_instance.model_dump(mode='json')).execute()
+        instance_data = response.data
+        if not instance_data:
+            return jsonify({"error": "Erro ao criar instância de tour!"}), 500
+        return jsonify({"message": "Instância de tour criada com sucesso!", "instance_id": instance_data[0]['id']}), 201
 
     except Exception as e:
         return jsonify({"error": f"Erro ao criar instância de tour: {e}"}), 500
