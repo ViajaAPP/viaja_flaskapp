@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.services.supabase_service import supabase
-from app.models.tour_models import TourCreateModel
+from app.models.tour_models import TourCreateModel, TourInstanceCreateModel
 from app.utils.auth import token_required
 
 tour_bp = Blueprint('tour', __name__)
@@ -67,3 +67,78 @@ def create_tour(current_user):
 
     except Exception as e:
         return jsonify({"error": f"Erro ao criar tour: {e}"}), 500
+
+@tour_bp.route('/instance', methods=['POST'])
+@token_required
+def create_tour_instance(current_user):
+    """
+    Criar uma nova instância de tour
+    ---
+    tags:
+        - Tours
+    security:
+        - BearerAuth: []
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        tour_id:
+                            type: integer
+                        start_time:
+                            type: string
+                            format: date-time
+                        max_capacity:
+                            type: integer
+                        status:
+                            type: string
+    responses:
+        201:
+            description: Instância de tour criada com sucesso
+        400:
+            description: Dados da instância de tour ausentes ou inválidos
+        403:
+            description: Acesso negado
+        404:
+            description: Tour não encontrado
+        500:
+            description: Erro ao criar instância de tour
+    """
+    # role do current_user deve ser GUIDE
+    role = current_user.get('role')
+    if role != "GUIDE":
+        return jsonify({"error": "Acesso negado: apenas guias podem criar instâncias de tours"}), 403
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados da instância de tour não fornecidos!"}), 400
+    
+    if not all([data.get('tour_id'), data.get('start_time'), data.get('max_capacity')]):
+        return jsonify({"error": "Campos obrigatórios faltando! Campos: tour_id, start_time, max_capacity, status"}), 400
+    
+    # verificar se o tour é do guia logado
+    try:
+        tour_response = supabase.table("tour").select("*").eq("id", data.get('tour_id')).execute()
+        tour_data = tour_response.data
+        if not tour_data:
+            return jsonify({"error": "Tour não encontrado!"}), 404
+        tour = tour_data[0]
+        if tour['created_by_id'] != current_user['user_id']:
+            return jsonify({"error": "Acesso negado: você só pode criar instâncias para seus próprios tours"}), 403
+    except Exception as e:
+        return jsonify({"error": f"Erro ao verificar tour: {e}"}), 500
+    
+    try:
+        tour_instance = TourInstanceCreateModel(
+            tour_id=data.get('tour_id'),
+            start_time=data.get('start_time'),
+            max_capacity=data.get('max_capacity'),
+            status="SCHEDULED"
+        )
+        supabase.table("tour_instance").insert(tour_instance.model_dump(mode='json')).execute()
+        return jsonify({"message": "Instância de tour criada com sucesso!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Erro ao criar instância de tour: {e}"}), 500
