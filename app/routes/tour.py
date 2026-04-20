@@ -134,8 +134,7 @@ def create_tour_instance(current_user):
         tour_instance = TourInstanceCreateModel(
             tour_id=data.get('tour_id'),
             start_time=data.get('start_time'),
-            max_capacity=data.get('max_capacity'),
-            status="SCHEDULED"
+            max_capacity=data.get('max_capacity')
         )
         supabase.table("tour_instance").insert(tour_instance.model_dump(mode='json')).execute()
         return jsonify({"message": "Instância de tour criada com sucesso!"}), 201
