@@ -68,9 +68,9 @@ def create_tour(current_user):
     except Exception as e:
         return jsonify({"error": f"Erro ao criar tour: {e}"}), 500
 
-@tour_bp.route('/instance', methods=['POST'])
+@tour_bp.route('/<int:tour_id>/instance', methods=['POST'])
 @token_required
-def create_tour_instance(current_user):
+def create_tour_instance(current_user, tour_id):
     """
     Criar uma nova instância de tour
     ---
@@ -78,6 +78,12 @@ def create_tour_instance(current_user):
         - Tours
     security:
         - BearerAuth: []
+    parameters:
+        - in: path
+            name: tour_id
+            required: true
+            schema:
+                type: integer
     requestBody:
         required: true
         content:
@@ -85,22 +91,18 @@ def create_tour_instance(current_user):
                 schema:
                     type: object
                     properties:
-                        tour_id:
-                            type: integer
                         start_time:
                             type: string
                             format: date-time
                         max_capacity:
                             type: integer
-                        status:
-                            type: string
     responses:
         201:
             description: Instância de tour criada com sucesso
         400:
             description: Dados da instância de tour ausentes ou inválidos
         403:
-            description: Acesso negado
+            description: Acesso negado: usuário não autorizado para criar instâncias de tours
         404:
             description: Tour não encontrado
         500:
@@ -115,12 +117,12 @@ def create_tour_instance(current_user):
     if not data:
         return jsonify({"error": "Dados da instância de tour não fornecidos!"}), 400
     
-    if not all([data.get('tour_id'), data.get('start_time'), data.get('max_capacity')]):
-        return jsonify({"error": "Campos obrigatórios faltando! Campos: tour_id, start_time, max_capacity, status"}), 400
+    if not all([data.get('start_time'), data.get('max_capacity')]):
+        return jsonify({"error": "Campos obrigatórios faltando! Campos: start_time, max_capacity"}), 400
     
     # verificar se o tour é do guia logado
     try:
-        tour_response = supabase.table("tour").select("*").eq("id", data.get('tour_id')).execute()
+        tour_response = supabase.table("tour").select("*").eq("id", tour_id).execute()
         tour_data = tour_response.data
         if not tour_data:
             return jsonify({"error": "Tour não encontrado!"}), 404
@@ -132,7 +134,7 @@ def create_tour_instance(current_user):
     
     try:
         tour_instance = TourInstanceCreateModel(
-            tour_id=data.get('tour_id'),
+            tour_id=tour_id,
             start_time=data.get('start_time'),
             max_capacity=data.get('max_capacity')
         )

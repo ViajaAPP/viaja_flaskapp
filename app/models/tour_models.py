@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
-from .enums import TourStatus, RequestStatus
+from .enums import TourStatus
 
 class TourCreateModel(BaseModel):
     created_by_id: int
@@ -24,13 +24,3 @@ class TourInstanceCreateModel(BaseModel):
 class TourInstanceModel(TourInstanceCreateModel):
     id: int
     created_at: datetime
-    
-class TourRequestCreateModel(BaseModel):
-    tour_instance_id: int
-    requester_id: int
-    status: RequestStatus = RequestStatus.PENDING
-    
-class TourRequestModel(TourRequestCreateModel):
-    id: int
-    created_at: datetime
-    last_updated: Optional[datetime] = None
