@@ -1,18 +1,15 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-
-class UserRole(BaseModel):
-    cod: str
-    description: Optional[str] = None
+from .enums import UserRole
     
-class UserCreate(BaseModel):
+class UserCreateModel(BaseModel):
     username: str
     email: EmailStr
     password: str
     phone: str
-    role: Optional[str] = None
+    role: UserRole
     cnpj: Optional[str] = None
     
-class UserModel(UserCreate):
+class UserModel(UserCreateModel):
     id: int
     created_at: str

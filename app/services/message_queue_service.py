@@ -1,7 +1,7 @@
 import queue
 import threading
 from app.services.supabase_service import supabase
-from app.models.message_models import MessageCreate, MessageModel
+from app.models.message_models import MessageCreateModel, MessageModel
 
 # A fila é instanciada aqui para ser um Singleton no módulo
 msg_queue = queue.Queue()
@@ -14,7 +14,7 @@ def process_messages():
             break
 
         try:
-            new_msg = MessageCreate(**dados)
+            new_msg = MessageCreateModel(**dados)
             
             # Insere no Supabase
             supabase.table("messages").insert(new_msg.model_dump()).execute()

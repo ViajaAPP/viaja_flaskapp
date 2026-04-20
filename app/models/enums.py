@@ -9,3 +9,8 @@ class RequestStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
     DENIED = "DENIED"
+    
+class UserRole(str, Enum):
+    TOURIST = "TOURIST"
+    GUIDE = "GUIDE"
+    EVENT_PROMOTER = "EVENT_PROMOTER"

@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, request, jsonify
 from pydantic import ValidationError
-from app.models.user_models import UserCreate # Seu DTO
+from app.models.user_models import UserCreateModel # Seu DTO
 from app.services.cnpj_service import buscar_dados_cnpj
 import bcrypt
 import jwt
@@ -55,7 +55,7 @@ def add_user():
     data['password'] = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     
     try:
-        user = UserCreate(**data)
+        user = UserCreateModel(**data)
     except ValidationError as e:
         return jsonify({"error": f"Dados de usuário inválidos: {e}"}), 400
     except Exception as e:
