@@ -19,10 +19,12 @@ def create_app():
     from .routes.health import health_bp
     from .routes.tour import tour_bp
     from .routes.message import messages_bp
+    from .routes.request import request_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(health_bp, url_prefix='/health')
     app.register_blueprint(tour_bp, url_prefix='/tour')
     app.register_blueprint(messages_bp, url_prefix='/messages')
+    app.register_blueprint(request_bp, url_prefix='/request')
 
     return app
