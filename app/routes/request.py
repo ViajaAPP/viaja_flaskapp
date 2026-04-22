@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
+from datetime import datetime, timezone
 from app.services.supabase_service import supabase
 from app.models.request_models import TourRequestCreateModel
 from app.utils.auth import token_required
@@ -110,6 +111,38 @@ def create_tour_request(current_user, tour_instance_id):
         current_app.logger.error(f"Exceção ao criar solicitação para tour: {str(e)}")
         return jsonify({"error": "Erro ao criar solicitação para tour"}), 500
     
+@request_bp.route('/', methods=['GET'])
+@token_required
+def list_user_requests(current_user):
+    """
+    Listar solicitações do usuário
+    ---
+    tags:
+        - Tour Requests
+    security:
+        - bearerAuth: []
+    responses:
+        200:
+            description: Lista de solicitações do usuário
+        403:
+            description: Acesso negado: usuário não autorizado para visualizar solicitações
+        500:
+            description: Erro ao listar solicitações do usuário
+    """
+    # role do current_user deve ser TOURIST ou GUIDE
+    role = current_user.get('role')
+    if role not in ["TOURIST"]:
+        return jsonify({"error": "Acesso negado: usuário não autorizado para visualizar solicitações"}), 403
+    
+    try:
+        # buscar informações da request, do tour instance e do tour para cada request do usuário
+        requests_response = supabase.table("tour_request").select("*, tour_instance(*, tour(*))").eq("requester_id", current_user['user_id']).execute()
+        requests = requests_response.data
+        return jsonify(requests), 200
+    except Exception as e:
+        current_app.logger.error(f"Exceção ao listar solicitações do usuário: {str(e)}")
+        return jsonify({"error": "Erro ao listar solicitações do usuário"}), 500
+
 @request_bp.route('/instances/<int:tour_instance_id>', methods=['GET'])
 @token_required
 def list_tour_requests(current_user, tour_instance_id):
@@ -163,7 +196,7 @@ def list_tour_requests(current_user, tour_instance_id):
         accepted_requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).eq("status", "ACCEPTED").execute()
         requests = requests_response.data + accepted_requests_response.data
     else:
-        requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).execute()
+        requests_response = supabase.table("tour_request").select("*, tour_instance(*, tour(*))").eq("tour_instance_id", tour_instance_id).execute()
         requests = requests_response.data
         if status:
             requests = [r for r in requests if r['status'] == status]
@@ -273,7 +306,7 @@ def update_tour_request_status(current_user, request_id):
             return jsonify({"error": "O tour está preenchido"}), 409
 
     try:
-        supabase.table("tour_request").update({"status": new_status}).eq("id", request_id).execute()
+        supabase.table("tour_request").update({"status": new_status, "last_update": datetime.now(timezone.utc).isoformat()}).eq("id", request_id).execute()
         return jsonify({"message": "Status do tour request atualizado com sucesso!"}), 200
     except Exception as e:
         current_app.logger.error(f"Exceção ao atualizar status do tour request: {str(e)}")
