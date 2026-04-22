@@ -109,3 +109,63 @@ def create_tour_request(current_user, tour_instance_id):
     except Exception as e:
         current_app.logger.error(f"Exceção ao criar solicitação para tour: {str(e)}")
         return jsonify({"error": "Erro ao criar solicitação para tour"}), 500
+    
+@request_bp.route('/instances/<int:tour_instance_id>', methods=['GET'])
+@token_required
+def list_tour_requests(current_user, tour_instance_id):
+    # Donos da tour podem ver solicitações de todos os status (e com filtro também), enquanto turistas só podem ver suas próprias solicitações e as de quem já foi aceito.
+    """
+    Listar solicitações para uma instância de tour
+    ---
+    tags:
+        - Tour Requests
+    parameters:
+        - in: path
+            name: tour_instance_id
+            required: true
+            schema:
+                type: integer
+            description: ID da instância de tour para a qual as solicitações estão sendo listadas.
+        - in: query
+            name: status
+            required: false
+            schema:
+                type: string
+                enum: [PENDING, ACCEPTED, DENIED]
+            description: Filtro opcional para listar solicitações por status.
+    security:
+        - bearerAuth: []
+    responses:
+        200:
+            description: Lista de solicitações para a instância de tour.
+        404:
+            description: Tour não encontrado
+        403:
+            description: Acesso negado: usuário não autorizado para visualizar solicitações
+        500:
+            description: Erro ao listar solicitações para tour
+    """
+    # role do current_user deve ser TOURIST ou GUIDE
+    role = current_user.get('role')
+    if role not in ["TOURIST", "GUIDE"]:
+        return jsonify({"error": "Acesso negado: usuário não autorizado para visualizar solicitações"}), 403
+    
+    status = request.args.get('status', None)
+    # verifica se a instância de tour existe
+    tour_instance_response = supabase.table("tour_instance").select("*").eq("id", tour_instance_id).execute()
+    if not tour_instance_response.data:
+        return jsonify({"error": "Tour não encontrado"}), 404
+    
+    tour_instance = tour_instance_response.data[0]
+    # turistas só podem ver suas próprias solicitações e as de quem já foi aceito, enquanto guias podem ver todas as solicitações
+    if role == "TOURIST":
+        requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).eq("requester_id", current_user['user_id']).execute()
+        accepted_requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).eq("status", "ACCEPTED").execute()
+        requests = requests_response.data + accepted_requests_response.data
+    else:
+        requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).execute()
+        requests = requests_response.data
+        if status:
+            requests = [r for r in requests if r['status'] == status]
+    return jsonify(requests), 200
+    
