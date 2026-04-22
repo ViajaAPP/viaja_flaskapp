@@ -169,3 +169,112 @@ def list_tour_requests(current_user, tour_instance_id):
             requests = [r for r in requests if r['status'] == status]
     return jsonify(requests), 200
     
+@request_bp.route('/<int:request_id>', methods=['PATCH'])
+@token_required
+def update_tour_request_status(current_user, request_id):
+    """
+    Atualizar o status de um tour request (aceitar ou recusar)
+    ---
+    tags:
+        - Tour Requests
+    parameters:
+        - in: path
+            name: request_id
+            required: true
+            schema:
+                type: integer
+            description: ID do tour request a ser atualizado
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        status:
+                            type: string
+                            enum: [ACCEPTED, DENIED]
+                            description: Novo status para o tour request
+    security:
+        - bearerAuth: []
+    responses:
+        200:
+            description: Status do tour request atualizado com sucesso
+        400:
+            description: Dados de atualização ausentes ou inválidos
+        404:
+            description: Tour request, tour instance ou tour não encontrado
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                    examples:
+                        request_nao_encontrado:
+                            summary: Tour request não encontrado
+                            value: {"error": "Tour request não encontrado"}
+                        tour_instance_nao_encontrada:
+                            summary: Tour instance não encontrada
+                            value: {"error": "Tour instance não encontrada"}
+                        tour_nao_encontrado:
+                            summary: Tour não encontrado
+                            value: {"error": "Tour não encontrado"}
+
+        403:
+            description: Acesso negado: usuário não autorizado para atualizar status
+        409:
+            description: Conflito de negócio (Capacidade)
+            content:
+            application/json:
+                schema:
+                type: object
+                properties:
+                    error:
+                        type: string
+                examples:
+                    lotado:
+                        summary: Tour lotado
+                        value: {"error": "O tour está preenchido"}
+        500:
+            description: Erro ao atualizar status do tour request
+    """
+    tour_request_response = supabase.table("tour_request").select("*").eq("id", request_id).execute()
+    if not tour_request_response.data:
+        return jsonify({"error": "Tour request não encontrado"}), 404
+    
+    tour_instance_response = supabase.table("tour_instance").select("*").eq("id", tour_request_response.data[0]['tour_instance_id']).execute()
+    if not tour_instance_response.data:
+        return jsonify({"error": "Tour instance não encontrada"}), 404
+    
+    tour_response = supabase.table("tour").select("*").eq("id", tour_instance_response.data[0]['tour_id']).execute()
+    if not tour_response.data:
+        return jsonify({"error": "Tour não encontrado"}), 404
+    
+    tour = tour_response.data[0]
+    if tour['created_by_id'] != current_user['user_id']:
+        return jsonify({"error": "Acesso negado: usuário não autorizado para atualizar status"}), 403
+    
+    # recupera novo status do body da requisição
+    data = request.get_json()
+    if not data or 'status' not in data:
+        return jsonify({"error": "Dados de atualização ausentes ou inválidos"}), 400
+    
+    new_status = data['status']
+    if new_status not in ["ACCEPTED", "DENIED"]:
+        return jsonify({"error": "Dados de atualização ausentes ou inválidos"}), 400
+    
+    if new_status == "ACCEPTED":
+        # consulta quantas pessoas estão com solicitações aprovadas para esta instância de tour
+        approved_requests_count_response = supabase.table("tour_request").select("id", count="exact").eq("tour_instance_id", tour_instance_response.data[0]['id']).eq("status", "ACCEPTED").execute()
+        approved_requests_count = approved_requests_count_response.count
+        if approved_requests_count and approved_requests_count >= tour_instance_response.data[0]['max_capacity']:
+            return jsonify({"error": "O tour está preenchido"}), 409
+
+    try:
+        supabase.table("tour_request").update({"status": new_status}).eq("id", request_id).execute()
+        return jsonify({"message": "Status do tour request atualizado com sucesso!"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Exceção ao atualizar status do tour request: {str(e)}")
+        return jsonify({"error": "Erro ao atualizar status do tour request"}), 500
