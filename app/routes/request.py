@@ -14,55 +14,6 @@ def create_tour_request(current_user, tour_instance_id):
     ---
     tags:
         - Tour Requests
-    parameters:
-        - in: path
-            name: tour_instance_id
-            required: true
-            schema:
-                type: integer
-            description: ID da instância de tour para a qual o request está sendo criado
-    requestBody:
-        required: true
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        message:
-                            type: string
-                            description: Mensagem opcional do viajante para o guia
-    security:
-        - bearerAuth: []
-    responses:
-        201:
-            description: Solicitação para tour criado com sucesso
-        400:
-            description: Dados da solicitação para tour ausentes ou inválidos
-        404:
-            description: Tour não encontrado
-        403:
-            description: Acesso negado: usuário não autorizado para criar solicitações
-        409:
-            description: Conflito de negócio (Capacidade ou Disponibilidade)
-            content:
-            application/json:
-                schema:
-                type: object
-                properties:
-                    error:
-                    type: string
-                examples:
-                    lotado:
-                        summary: Tour lotado
-                        value: {"error": "O tour está preenchido"}
-                    indisponivel:
-                        summary: Tour desativado
-                        value: {"error": "O tour não está disponível para solicitações"}
-                    solicitado:
-                        summary: Viajante já solicitou este tour
-                        value: {"error": "Você já tem uma solicitação para este tour"}
-        500:
-            description: Erro ao criar solicitação para tour
     """
     # role do current_user deve ser TRAVELER
     role = current_user.get('role')
@@ -119,15 +70,6 @@ def list_user_requests(current_user):
     ---
     tags:
         - Tour Requests
-    security:
-        - bearerAuth: []
-    responses:
-        200:
-            description: Lista de solicitações do usuário
-        403:
-            description: Acesso negado: usuário não autorizado para visualizar solicitações
-        500:
-            description: Erro ao listar solicitações do usuário
     """
     # role do current_user deve ser TOURIST ou GUIDE
     role = current_user.get('role')
@@ -152,31 +94,6 @@ def list_tour_requests(current_user, tour_instance_id):
     ---
     tags:
         - Tour Requests
-    parameters:
-        - in: path
-            name: tour_instance_id
-            required: true
-            schema:
-                type: integer
-            description: ID da instância de tour para a qual as solicitações estão sendo listadas.
-        - in: query
-            name: status
-            required: false
-            schema:
-                type: string
-                enum: [PENDING, ACCEPTED, DENIED]
-            description: Filtro opcional para listar solicitações por status.
-    security:
-        - bearerAuth: []
-    responses:
-        200:
-            description: Lista de solicitações para a instância de tour.
-        404:
-            description: Tour não encontrado
-        403:
-            description: Acesso negado: usuário não autorizado para visualizar solicitações
-        500:
-            description: Erro ao listar solicitações para tour
     """
     # role do current_user deve ser TOURIST ou GUIDE
     role = current_user.get('role')
@@ -210,68 +127,6 @@ def update_tour_request_status(current_user, request_id):
     ---
     tags:
         - Tour Requests
-    parameters:
-        - in: path
-            name: request_id
-            required: true
-            schema:
-                type: integer
-            description: ID do tour request a ser atualizado
-    requestBody:
-        required: true
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        status:
-                            type: string
-                            enum: [ACCEPTED, DENIED]
-                            description: Novo status para o tour request
-    security:
-        - bearerAuth: []
-    responses:
-        200:
-            description: Status do tour request atualizado com sucesso
-        400:
-            description: Dados de atualização ausentes ou inválidos
-        404:
-            description: Tour request, tour instance ou tour não encontrado
-            content:
-                application/json:
-                    schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                    examples:
-                        request_nao_encontrado:
-                            summary: Tour request não encontrado
-                            value: {"error": "Tour request não encontrado"}
-                        tour_instance_nao_encontrada:
-                            summary: Tour instance não encontrada
-                            value: {"error": "Tour instance não encontrada"}
-                        tour_nao_encontrado:
-                            summary: Tour não encontrado
-                            value: {"error": "Tour não encontrado"}
-
-        403:
-            description: Acesso negado: usuário não autorizado para atualizar status
-        409:
-            description: Conflito de negócio (Capacidade)
-            content:
-            application/json:
-                schema:
-                type: object
-                properties:
-                    error:
-                        type: string
-                examples:
-                    lotado:
-                        summary: Tour lotado
-                        value: {"error": "O tour está preenchido"}
-        500:
-            description: Erro ao atualizar status do tour request
     """
     tour_request_response = supabase.table("tour_request").select("*").eq("id", request_id).execute()
     if not tour_request_response.data:

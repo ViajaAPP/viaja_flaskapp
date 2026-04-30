@@ -19,28 +19,6 @@ def add_user():
     ---
     tags:
         - Users
-    requestBody:
-        required: true
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        email:
-                            type: string
-                        password:
-                            type: string
-                        role:
-                            type: string
-                        cnpj:
-                            type: string
-    responses:
-        201:
-            description: Usuário criado com sucesso
-        400:
-            description: Dados de usuário ausentes ou inválidos
-        500:
-            description: Erro ao salvar usuário no banco de dados
     """
     data = request.get_json()
     if not data:

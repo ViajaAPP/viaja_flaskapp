@@ -13,32 +13,6 @@ def create_tour(current_user):
     ---
     tags:
         - Tours
-    security:
-        - BearerAuth: []
-    requestBody:
-        required: true
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        title:
-                            type: string
-                        description:
-                            type: string
-                        price:
-                            type: number
-                        estimated_duration_minutes:
-                            type: integer
-                        meeting_point:
-                            type: string
-    responses:
-        201:
-            description: Tour criado com sucesso
-        400:
-            description: Dados do tour ausentes ou inválidos
-        500:
-            description: Erro ao criar tour
     """
     # role do current_user deve ser GUIDE
     role = current_user.get('role')
@@ -79,37 +53,6 @@ def create_tour_instance(current_user, tour_id):
     ---
     tags:
         - Tours
-    security:
-        - BearerAuth: []
-    parameters:
-        - in: path
-            name: tour_id
-            required: true
-            schema:
-                type: integer
-    requestBody:
-        required: true
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        start_time:
-                            type: string
-                            format: date-time
-                        max_capacity:
-                            type: integer
-    responses:
-        201:
-            description: Instância de tour criada com sucesso
-        400:
-            description: Dados da instância de tour ausentes ou inválidos
-        403:
-            description: Acesso negado: usuário não autorizado para criar instâncias de tours
-        404:
-            description: Tour não encontrado
-        500:
-            description: Erro ao criar instância de tour
     """
     # role do current_user deve ser GUIDE
     role = current_user.get('role')
