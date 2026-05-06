@@ -1,30 +1,23 @@
 import os
-import platform
-from flask import jsonify
 from app import create_app
-from pyngrok import ngrok
+from pyngrok import ngrok, conf
 from dotenv import load_dotenv
+from sockets import *
 
 load_dotenv()
-
-def force_kill_ngrok():
-    try:
-        if platform.system() == "Windows":
-            os.system("taskkill /f /im ngrok.exe >nul 2>&1")
-        else:
-            os.system("killall -9 ngrok >/dev/null 2>&1")
-    except:
-        pass
-
 
 app = create_app()
 
 if __name__ == "__main__":
-    NGROK_TOKEN = os.environ.get("NGROK_AUTHTOKEN")
-    if NGROK_TOKEN:
-        force_kill_ngrok()
-        ngrok.set_auth_token(NGROK_TOKEN)
-        public_url = ngrok.connect(5000).public_url
-        print(f" * Ngrok tunnel disponível em: {public_url}")
+    # startar socket em uma url ngrok e o flask app em outra url ngrok, cada um em uma thread diferente
+    NGROK_WS_TOKEN = os.environ.get("NGROK_WS_TOKEN")
+    NGROK_API_TOKEN = os.environ.get("NGROK_API_TOKEN")
+    if NGROK_WS_TOKEN and NGROK_API_TOKEN:
+        config_api = conf.PyngrokConfig(auth_token=NGROK_API_TOKEN)
+        public_url_api = ngrok.connect(5000, pyngrok_config=config_api).public_url
+        print(f" * API Flask disponível em: {public_url_api}")
+
+        config_ws = conf.PyngrokConfig(auth_token=NGROK_WS_TOKEN)
+        public_url_ws = ngrok.connect(8765, "tcp", pyngrok_config=config_ws).public_url
+        print(f" * WebSocket disponível em: {public_url_ws}")
     
-    app.run(port=5000, debug=True)
