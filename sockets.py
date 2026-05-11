@@ -249,8 +249,8 @@ def start_server_socket(host="0.0.0.0", port=8765):
         thread = threading.Thread(target=handle_client, args=(conn, addr), daemon=True)
         thread.start()
 
-public_url = ngrok.connect(8765, "tcp")
-print(f"[server] Túnel ngrok aberto: {public_url}")
+# public_url = ngrok.connect(8765, "tcp")
+# print(f"[server] Túnel ngrok aberto: {public_url}")
 
-server_thread = threading.Thread(target=start_server_socket, daemon=True)
-server_thread.start()
+# server_thread = threading.Thread(target=start_server_socket, daemon=True)
+# server_thread.start()
