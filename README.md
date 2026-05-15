@@ -45,10 +45,11 @@ pip install -r requirements.txt
 ## 4) Configurar variáveis de ambiente
 Criar arquivo `.env` na raiz (exemplo):
 ```env
-SUPABASE_URL=<supabase_url>
-SUPABASE_KEY=<supabase_key>
-NGROK_AUTHTOKEN=<ngrok_authtoken>
-AUTH_CRYPT_KEY=<auth_crypt_key>
+SUPABASE_URL=https://pxwjvoztqcdercllisuy.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4d2p2b3p0cWNkZXJjbGxpc3V5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTQ4MzE3NCwiZXhwIjoyMDkxMDU5MTc0fQ.n-klIylh0Hli_Vi0ys17URlFiC0ktRLT4NnRyAJ_QtA
+NGROK_API_TOKEN=3BxetiqW5pBpL0indCoJmzJCo9E_2jXyKm6AC9fGZmuftdzau
+NGROK_WS_TOKEN=3ArdSB4looixxLtCZbbI0g3tOTK_6MeAwdbMKYhtF3ur8Z4Wd
+AUTH_CRYPT_KEY=viaja_crypt
 ```
 
 ## 5) Iniciar a API
