@@ -45,10 +45,11 @@ pip install -r requirements.txt
 ## 4) Configurar variáveis de ambiente
 Criar arquivo `.env` na raiz (exemplo):
 ```env
-SUPABASE_URL=<supabase_url>
-SUPABASE_KEY=<supabase_key>
-NGROK_AUTHTOKEN=<ngrok_authtoken>
-AUTH_CRYPT_KEY=<auth_crypt_key>
+SUPABASE_URL=https://pxwjvoztqcdercllisuy.supabase.co
+SUPABASE_KEY=REMOVIDO
+NGROK_API_TOKEN=REMOVIDO
+NGROK_WS_TOKEN=REMOVIDO
+AUTH_CRYPT_KEY=REMOVIDO
 ```
 
 ## 5) Iniciar a API
