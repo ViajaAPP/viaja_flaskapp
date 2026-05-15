@@ -17,18 +17,20 @@ def create_app():
     init_swagger(app)
 
     # Registro de Blueprints
+    from .routes.socket import socket_bp
     from .routes.auth import auth_bp
     from .routes.health import health_bp
     from .routes.tour import tour_bp
     from .routes.message import messages_bp
     from .routes.request import request_bp
-    from .routes.socket import socket_bp
-    
+    from .routes.chat import chat_bp
+
+    app.register_blueprint(socket_bp, url_prefix='/ws')
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(health_bp, url_prefix='/health')
     app.register_blueprint(tour_bp, url_prefix='/tour')
     app.register_blueprint(messages_bp, url_prefix='/messages')
     app.register_blueprint(request_bp, url_prefix='/request')
-    app.register_blueprint(socket_bp, url_prefix='/ws')
+    app.register_blueprint(chat_bp, url_prefix='/chat')
 
     return app
