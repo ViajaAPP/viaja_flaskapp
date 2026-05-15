@@ -1,4 +1,6 @@
 import os
+import sys
+import threading
 from app import create_app
 from pyngrok import ngrok, conf
 from dotenv import load_dotenv
@@ -28,29 +30,50 @@ def start_ngrok_api(config):
     print(f" * API Flask disponível em: {public_url}")
 
 def start_ngrok_ws(config):
-    # tem que executar nele a função start_server_socket() do sockets.py
     public_url = ngrok.connect(8765, "tcp", name="socket-server", pyngrok_config=config).public_url
     print(f" * WebSocket disponível em: {public_url}")
-    atualiza_env("PUBLIC_URL_WS", public_url.replace("tcp://", "ws://").replace("http://", "ws://").replace("https://", "ws://"))
+    
+    # padroniza o protocolo para ws://
+    ws_url = public_url.replace("tcp://", "ws://").replace("http://", "ws://").replace("https://", "ws://")
+    atualiza_env("PUBLIC_URL_WS", ws_url)
+    
+    # executa o servidor socket (bloqueante) dentro desta thread dedicada
     start_server_socket()
 
 app = create_app()
 
 if __name__ == "__main__":
-    # startar socket em uma url ngrok e o flask app em outra url ngrok, cada um em uma thread diferente, com pooling enabled
+    only_api = "--api" in sys.argv
+    only_ws = "--ws" in sys.argv
+
+    if only_api and only_ws:
+        print(" * Erro: Não pode iniciar ambos os serviços com os argumentos --api e --ws.")
+        sys.exit(1)
+
     NGROK_WS_TOKEN = os.environ.get("NGROK_WS_TOKEN")
     NGROK_API_TOKEN = os.environ.get("NGROK_API_TOKEN")
 
-    if NGROK_WS_TOKEN and NGROK_API_TOKEN:
-        config_api = conf.PyngrokConfig(auth_token=NGROK_API_TOKEN)
-        config_ws = conf.PyngrokConfig(auth_token=NGROK_WS_TOKEN)
-        
-        # WEBSOCKET: Precisa de thread se start_server_socket() for bloqueante
-        t_ws = threading.Thread(target=start_ngrok_ws, args=(config_ws,), daemon=True)
-        t_ws.start()
+    is_flask_reloader = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
 
-        # API: É melhor rodar fora de thread para garantir que a URL apareça 
-        start_ngrok_api(config_api)
+    if not is_flask_reloader:
+        if NGROK_WS_TOKEN and NGROK_API_TOKEN:
+            config_api = conf.PyngrokConfig(auth_token=NGROK_API_TOKEN)
+            config_ws = conf.PyngrokConfig(auth_token=NGROK_WS_TOKEN)
 
+            # inicia o WebSocket apenas se não foi pedida "apenas a api"
+            if not only_api:
+                t_ws = threading.Thread(target=start_ngrok_ws, args=(config_ws,), daemon=True)
+                t_ws.start()
+                print(" * Serviço WebSocket iniciado em background.")
+
+            #iInicia o túnel da API se não foi pedido "apenas o ws"
+            if not only_ws:
+                start_ngrok_api(config_api)
+        else:
+            print(" * Erro: Tokens do ngrok em falta no ficheiro .env")
+            sys.exit(1)
+
+    # se houver alterações de código, apenas esta parte reinicia
+    if not only_ws:
         print(" * Iniciando Servidor Flask...")
-        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=True)
