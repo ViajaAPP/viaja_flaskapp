@@ -7,6 +7,28 @@ messages_bp = Blueprint('messages', __name__)
 @messages_bp.route('/send', methods=['POST'])
 @token_required
 def send_message(current_user_id):
+    """
+    Enviar uma mensagem para um chat específico
+    ---
+    tags:
+        - Messages
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        content:
+                            type: string
+                        chat_id:
+                            type: string
+    responses:
+        202:
+            description: Mensagem enviada para processamento
+        400:
+            description: Dados incompletos ou inválidos
+    """
     data = request.json
     content = data.get('content')
     chat_id = data.get('chat_id')

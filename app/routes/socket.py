@@ -6,6 +6,17 @@ socket_bp = Blueprint('socket', __name__)
 
 @socket_bp.route('/', methods=['GET'])
 def get_websocket_url():
+    """
+    Obter a URL do WebSocket para conexões em tempo real
+    ---
+    tags:
+        - Socket
+    responses:
+        200:
+            description: URL do WebSocket obtida com sucesso
+        404:
+            description: URL do WebSocket não encontrada
+    """
     # ler o arquivo .env e pegar a url do websocket
     websocket_url = None
     env_path = ".env"

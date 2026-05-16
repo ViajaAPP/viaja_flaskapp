@@ -22,7 +22,7 @@ def init_chat(current_user, tour_instance_id):
         201:
             description: Chat criado com sucesso
         403:
-            description: Acesso negado: usuário não autorizado para iniciar chat ou não é parte do tour
+            description: Acesso negado
         404:
             description: Tour não encontrado
         500:
@@ -41,7 +41,7 @@ def init_chat(current_user, tour_instance_id):
         return jsonify({"error": "Tour não encontrado"}), 404
     tour = tour_response.data[0]
     if tour['created_by_id'] != current_user['user_id']:
-        return jsonify({"error": "Acesso negado: usuário não é o criador do tour"}), 403
+        return jsonify({"error": "Acesso negado"}), 403
 
     # cria ou recupera o chat para esta instância de tour
     chat_response = supabase.table("chat").select("*").eq("tour_instance_id", tour_instance_id).execute()

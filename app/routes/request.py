@@ -18,7 +18,7 @@ def create_tour_request(current_user, tour_instance_id):
     # role do current_user deve ser TRAVELER
     role = current_user.get('role')
     if role != "TOURIST":
-        return jsonify({"error": "Acesso negado: usuário não autorizado para criar solicitações"}), 403
+        return jsonify({"error": "Acesso negado"}), 403
     
     # recupera dados do tour request
     data = request.get_json()
@@ -74,7 +74,7 @@ def list_user_requests(current_user):
     # role do current_user deve ser TOURIST ou GUIDE
     role = current_user.get('role')
     if role not in ["TOURIST"]:
-        return jsonify({"error": "Acesso negado: usuário não autorizado para visualizar solicitações"}), 403
+        return jsonify({"error": "Acesso negado"}), 403
     
     try:
         # buscar informações da request, do tour instance e do tour para cada request do usuário
@@ -94,11 +94,32 @@ def list_tour_requests(current_user, tour_instance_id):
     ---
     tags:
         - Tour Requests
+    parameters:
+    - in: query
+      name: status
+      schema:
+        type: string
+      description: Filtrar solicitações por status (PENDING, ACCEPTED, DENIED)
+    - in: path
+      name: tour_instance_id
+      schema:
+        type: integer
+      required: true
+      description: ID da instância de tour
+    responses:
+        200:
+            description: Lista de solicitações para a instância de tour
+        403:
+            description: Acesso negado para usuários não autorizados
+        404:
+            description: Instância de tour não encontrada
+        500:
+            description: Erro ao buscar solicitações para a instância de tour
     """
     # role do current_user deve ser TOURIST ou GUIDE
     role = current_user.get('role')
     if role not in ["TOURIST", "GUIDE"]:
-        return jsonify({"error": "Acesso negado: usuário não autorizado para visualizar solicitações"}), 403
+        return jsonify({"error": "Acesso negado"}), 403
     
     status = request.args.get('status', None)
     # verifica se a instância de tour existe
@@ -142,7 +163,7 @@ def update_tour_request_status(current_user, request_id):
     
     tour = tour_response.data[0]
     if tour['created_by_id'] != current_user['user_id']:
-        return jsonify({"error": "Acesso negado: usuário não autorizado para atualizar status"}), 403
+        return jsonify({"error": "Acesso negado"}), 403
     
     # recupera novo status do body da requisição
     data = request.get_json()

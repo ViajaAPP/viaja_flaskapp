@@ -215,7 +215,7 @@ def create_tour_instance(current_user, tour_id):
             return jsonify({"error": "Tour não encontrado"}), 404
         tour = tour_data[0]
         if tour['created_by_id'] != current_user['user_id']:
-            return jsonify({"error": "Acesso negado: você só pode criar instâncias para seus próprios tours"}), 403
+            return jsonify({"error": "Acesso negado"}), 403
     except Exception as e:
         return jsonify({"error": f"Erro ao verificar tour: {e}"}), 500
     
