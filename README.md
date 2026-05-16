@@ -75,6 +75,15 @@ viaja_flaskapp/
 
 ---
 
+## Como visualizar as rotas disponíveis
+1. Iniciar a API.
+2. Acessar a URL informada pelo serviço do NGROK (ex.: `https://abc123.ngrok.io`).
+3. Adicionar `/docs` para acessar a documentação interativa (ex.: `https://abc123.ngrok.io/docs`).
+
+Nela, você pode testar os endpoints diretamente pela interface, visualizar os parâmetros esperados e as respostas.
+
+---
+
 ## Como adicionar novos modelos
 
 1. Criar arquivo em `app/models/` (ex.: `destino.py`).
