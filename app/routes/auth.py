@@ -26,12 +26,17 @@ def add_user():
                 schema:
                     type: object
                     properties:
+                        username:
+                            type: string
                         email:
                             type: string
                         password:
                             type: string
-                        role:
+                        phone:
                             type: string
+                        role:
+                            type: enum
+                            enum: [TOURIST, GUIDE, EVENT_PROMOTER]
                         cnpj:
                             type: string
     responses:
