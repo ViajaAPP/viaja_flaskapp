@@ -4,6 +4,8 @@ from app.utils.auth import token_required
 
 chat_bp = Blueprint('chat', __name__)
 
+
+
 @chat_bp.route('/instances/<int:tour_instance_id>', methods=['POST'])
 @token_required
 def init_chat(current_user, tour_instance_id):
@@ -35,7 +37,7 @@ def init_chat(current_user, tour_instance_id):
     tour_instance = tour_instance_response.data[0]
     tour_id = tour_instance['tour_id']
     
-    # verifica se o usuário é criador do tour
+    # verifica se o usuário é criador do tour!!!
     tour_response = supabase.table("tour").select("*").eq("id", tour_id).execute()
     if not tour_response.data:
         return jsonify({"error": "Tour não encontrado"}), 404
@@ -59,10 +61,77 @@ def init_chat(current_user, tour_instance_id):
         return jsonify({"error": "Erro ao criar chat para tour"}), 500
     return jsonify({"message": "Chat criado com sucesso!", "chat_id": chat_data[0]['id']}), 201
 
+
+def _get_accessible_tour_instance_ids(current_user):
+    """IDs de instâncias de tour em que o usuário participa (guia ou turista aceito)."""
+    user_id = current_user['user_id']
+    role = current_user.get('role')
+
+    if role == "GUIDE":
+        tours_response = supabase.table("tour").select("id").eq("created_by_id", user_id).execute()
+        tour_ids = [t['id'] for t in (tours_response.data or [])]
+        if not tour_ids:
+            return []
+        instances_response = (
+            supabase.table("tour_instance").select("id").in_("tour_id", tour_ids).execute()
+        )
+        return [i['id'] for i in (instances_response.data or [])]
+
+    if role == "TOURIST":
+        requests_response = (
+            supabase.table("tour_request")
+            .select("tour_instance_id")
+            .eq("requester_id", user_id)
+            .eq("status", "ACCEPTED")
+            .execute()
+        )
+        return [r['tour_instance_id'] for r in (requests_response.data or [])]
+
+    return None
+
+
 @chat_bp.route('/', methods=['GET'])
 @token_required
-def list_chats(current_user):
-    pass
+def list_chats(current_user): # lista chats do usuário autenticado
+    """
+    Listar chats do usuário autenticado
+    ---
+    tags:
+        - Chat
+    description: |
+        Retorna todos os chats em que o usuário participa.
+        Guias veem chats das instâncias dos tours que criaram.
+        Turistas veem chats das instâncias em que foram aceitos.
+        Um usuário pode ter vários chats abertos ao mesmo tempo.
+    responses:
+        200:
+            description: Lista de chats do usuário
+        403:
+            description: Acesso negado
+        500:
+            description: Erro ao listar chats
+    """
+    role = current_user.get('role')
+    if role not in ["GUIDE", "TOURIST"]:
+        return jsonify({"error": "Acesso negado"}), 403
+
+    try:
+        instance_ids = _get_accessible_tour_instance_ids(current_user)
+        if instance_ids is None:
+            return jsonify({"error": "Acesso negado"}), 403
+        if not instance_ids:
+            return jsonify([]), 200
+
+        chats_response = (
+            supabase.table("chat")
+            .select("*, tour_instance(*, tour(id, title, description, meeting_point))")
+            .in_("tour_instance_id", instance_ids)
+            .execute()
+        )
+        return jsonify(chats_response.data or []), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao listar chats do usuário: {e}")
+        return jsonify({"error": "Erro ao listar chats"}), 500
 
 @chat_bp.route('/<int:chat_id>/messages', methods=['POST'])
 @token_required
