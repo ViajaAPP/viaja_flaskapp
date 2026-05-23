@@ -28,6 +28,10 @@ def add_user():
                     properties:
                         username:
                             type: string
+                        first_name:
+                            type: string
+                        last_name:
+                            type: string
                         email:
                             type: string
                         password:
@@ -37,6 +41,8 @@ def add_user():
                         role:
                             type: enum
                             enum: [TOURIST, GUIDE, EVENT_PROMOTER]
+                        photo:
+                            type: string
                         cnpj:
                             type: string
     responses:
