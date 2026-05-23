@@ -10,6 +10,8 @@ class TourCreateModel(BaseModel):
     price: float
     estimated_duration_minutes: int
     meeting_point: str
+    photo: str
+    address_id: int
     
 class TourModel(TourCreateModel):
     id: int
