@@ -4,7 +4,7 @@ from app.utils.auth import token_required
 
 pages_bp = Blueprint('pages', __name__)
 
-@pages_bp.route('/home', methods=['POST'])
+@pages_bp.route('/home', methods=['GET'])
 @token_required
 def home(current_user):
     """
@@ -76,3 +76,5 @@ def home(current_user):
             "popularActivities": popular_tours
         }), 200
     except Exception as e:
+        current_app.logger.error(f"Erro ao acessar a página inicial: {str(e)}")
+        return jsonify({"error": "Erro ao acessar a página inicial"}), 500
