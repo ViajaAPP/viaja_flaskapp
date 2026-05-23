@@ -24,6 +24,7 @@ def create_app():
     from .routes.message import messages_bp
     from .routes.request import request_bp
     from .routes.chat import chat_bp
+    from .routes.pages import pages_bp
 
     app.register_blueprint(socket_bp, url_prefix='/ws')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -32,5 +33,6 @@ def create_app():
     app.register_blueprint(messages_bp, url_prefix='/messages')
     app.register_blueprint(request_bp, url_prefix='/request')
     app.register_blueprint(chat_bp, url_prefix='/chat')
+    app.register_blueprint(pages_bp, url_prefix='/pages')
 
     return app
