@@ -28,6 +28,8 @@ def create_tour(current_user):
                         type: string
                     price:
                         type: number
+                    photo:
+                        type: string
                     estimated_duration_minutes:
                         type: integer
                     meeting_point:
