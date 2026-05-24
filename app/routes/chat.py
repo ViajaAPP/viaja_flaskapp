@@ -146,8 +146,59 @@ def list_chats(current_user): # lista chats do usuário autenticado
 @chat_bp.route('/<int:chat_id>/messages', methods=['POST'])
 @token_required
 def send_message(current_user, chat_id):
-    pass
-
+    """
+    Enviar mensagem para um chat específico
+    ---
+    tags:
+        - Chat
+    description: |
+        Envia uma mensagem para o chat identificado por `chat_id`.
+        O usuário deve participar do chat para enviar mensagens.
+    parameters:
+        - name: chat_id
+          in: path
+          description: ID do chat
+          required: true
+          type: integer
+        - name: content
+          in: body
+          description: Conteúdo da mensagem
+          required: true
+          type: string
+    responses:
+        201:
+            description: Mensagem enviada com sucesso
+        400:
+            description: ID do chat é obrigatório ou conteúdo da mensagem é obrigatório
+        404:
+            description: Chat não encontrado
+        500:
+            description: Erro ao enviar mensagem
+    """
+    if(chat_id is None):
+        return jsonify({"error": "ID do chat é obrigatório"}), 400
+    data = request.get_json()
+    content = data.get("content")
+    if not content:
+        return jsonify({"error": "Conteúdo da mensagem é obrigatório"}), 400
+    
+    try:
+        chat_response = supabase.table("chat").select("*").eq("id", chat_id).execute()
+        if not chat_response.data:
+            return jsonify({"error": "Chat não encontrado"}), 404
+        chat = chat_response.data[0]
+        
+        supabase.table("chat_message").insert({
+            "user_id": current_user['user_id'],
+            "chat_id": chat_id,
+            "text": content
+        }).execute()
+        
+        return jsonify({"message": "Mensagem enviada com sucesso!"}), 201
+    except Exception as e:
+        current_app.logger.error(f"Erro ao enviar mensagem: {e}")
+        return jsonify({"error": "Erro ao enviar mensagem"}), 500
+    
 @chat_bp.route('/<int:chat_id>/messages', methods=['GET'])
 @token_required
 def get_chat_messages(current_user, chat_id):
