@@ -62,7 +62,7 @@ def home(current_user):
         
         return jsonify({
             "user": {
-                "name": user['first_name'] + " " + user['last_name'],
+                "name": user['first_name'],
                 "fotoUser": user['photo']
             },
             "greeting": 'Bem-vindo de volta,',
