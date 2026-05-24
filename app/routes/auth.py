@@ -145,7 +145,7 @@ def login():
 
     # Gerar o token com expiração
     token = jwt.encode(
-        {"user_id": user['user_id'], "role": user['role'], "exp": datetime.now(timezone.utc) + timedelta(minutes=30)},
+        {"user_id": user['user_id'], "role": user['role'], "exp": datetime.now(timezone.utc) + timedelta(days=30)},
         current_app.config['AUTH_CRYPT_KEY'],
         algorithm="HS256"
     )
