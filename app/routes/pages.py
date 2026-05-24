@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
 from app.utils.auth import token_required
+from datetime import timedelta, datetime, timezone
 
 pages_bp = Blueprint('pages', __name__)
 
@@ -78,3 +79,80 @@ def home(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página inicial: {str(e)}")
         return jsonify({"error": "Erro ao acessar a página inicial"}), 500
+    
+@pages_bp.route('/chats', methods=['POST'])
+@token_required
+def chats(current_user):
+    """
+    Página de chats do aplicativo
+    ---
+    tags:
+        - Pages
+    parameters:
+        - name: current_user
+          in: header
+          type: string
+          required: true
+          description: Token de autenticação do usuário
+    responses:
+        200:
+            type: object
+            properties:
+                message:
+                    type: string
+            description: Eventos em que a pessoa está participando ou organizando
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+        401:
+            description: Token de autenticação inválido ou ausente
+        500:
+            description: Erro ao acessar a página de chats
+    """
+    try:
+        tour_list = []
+        if current_user['role'] == 'GUIDE':
+            # busca os tours dele que tem mais de uma pessoa participando
+            tours_response = supabase.rpc("get_tours_guide", {"guide_id": current_user['user_id']}).execute()
+        if current_user['role'] == 'TOURIST':
+            # busca os tours que ele está participando
+            tours_response = supabase.rpc("get_tours_tourist", {"tourist_id": current_user['user_id']}).execute()
+
+        for tour in tours_response.data:
+            tour_date = ''
+            current_time = datetime.now(timezone.utc)
+            
+            start_time_str = tour['start_time'].replace('Z', '+00:00')
+            tour_start_time = datetime.fromisoformat(start_time_str)
+            
+            if tour_start_time <= current_time:
+                tour_date = 'Evento em andamento'
+            elif tour_start_time.date() == current_time.date():
+                tour_date = 'Saída hoje às ' + tour_start_time.strftime('%H:%M')
+            elif tour_start_time.date() == (current_time + timedelta(days=1)).date():
+                tour_date = 'Saída amanhã às ' + tour_start_time.strftime('%H:%M')
+            else:
+                tour_date = 'Saída em ' + tour_start_time.strftime('%d/%m/%Y, %H:%M')
+                
+            members = supabase.rpc("get_tour_members", {"tour_instance_id": tour['tour_instance_id']}).execute()
+                
+            tour_list.append({
+                "tour_id": tour['tour_id'],
+                "tour_instance_id": tour['tour_instance_id'],
+                "tour_title": tour['tour_title'],
+                "tour_photo": tour['tour_photo'],
+                "tour_date": tour_date,
+                "chat_id": tour['chat_id'],
+                "chat_open": tour['chat_id'] is not None,
+                "members": members.data if members.data else []
+            })
+            
+        return jsonify({
+            "tour_list": tour_list,
+            "direct_conversations": []
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao acessar a página de chats: {str(e)}")
+        return jsonify({"error": "Erro ao acessar a página de chats"}), 500
