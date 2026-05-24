@@ -217,7 +217,7 @@ def chat(current_user):
         if not socket_connection_url:
             return jsonify({"error": "URL do WebSocket não encontrada"}), 500
         
-        socket_connection_url = socket_connection_url + f"ws?user_id={current_user['user_id']}&chats={chat_id}"
+        socket_connection_url = socket_connection_url + f"/ws?user_id={current_user['user_id']}&chats={chat_id}"
         
         return jsonify({
             "chat_name": chat_name,
