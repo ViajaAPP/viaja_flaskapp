@@ -4,7 +4,17 @@ from app.utils.auth import token_required
 
 chat_bp = Blueprint('chat', __name__)
 
-
+def _get_last_messages(chat_id, limit=20, offset=0):
+    """Recupera as últimas mensagens de um chat específico."""
+    messages_response = (
+        supabase.table("chat_message")
+        .select("*")
+        .eq("chat_id", chat_id)
+        .order("created_at", desc=True)
+        .range(offset, offset + limit - 1)
+        .execute()
+    )
+    return messages_response.data or []
 
 @chat_bp.route('/instances/<int:tour_instance_id>', methods=['POST'])
 @token_required

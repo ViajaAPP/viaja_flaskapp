@@ -1,6 +1,8 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
 from app.utils.auth import token_required
+from app.routes.chat import _get_last_messages
+from app.routes.socket import _get_websocket_url
 from datetime import timedelta, datetime, timezone
 
 pages_bp = Blueprint('pages', __name__)
@@ -156,3 +158,73 @@ def chats(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página de chats: {str(e)}")
         return jsonify({"error": "Erro ao acessar a página de chats"}), 500
+    
+@pages_bp.route('/chat', methods=['POST'])
+@token_required
+def chat(current_user):
+    """
+    Página de um chat específico do aplicativo
+    ---
+    tags:
+        - Pages
+    parameters:
+        - name: current_user
+          in: header
+          type: string
+          required: true
+          description: Token de autenticação do usuário
+        - name: chat_id
+          in: body
+          type: integer
+          required: true
+          description: ID do chat a ser acessado
+    responses:
+        200:
+            type: object
+            properties:
+                message:
+                    type: string
+            description: Detalhes do chat, incluindo mensagens e participantes
+            schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+    """
+    chat_id = request.json.get('chat_id')
+    if not chat_id:
+        return jsonify({"error": "ID do chat é obrigatório"}), 400
+    try:
+        chat_name = ''
+        chat_response = supabase.rpc('get_tour_by_chat', {"chat_id": chat_id}).execute()
+        if chat_response.data:
+            chat_name = chat_response.data[0]['tour_title']
+            
+        members_response = supabase.rpc('get_tour_members', {"tour_instance_id": chat_response.data[0]['tour_instance_id']}).execute()
+        user_list = []
+        if members_response.data:
+            for member in members_response.data:
+                user_list.append({
+                    "user_id": member['user_id'],
+                    "first_name": member['first_name'],
+                    "last_name": member['last_name'],
+                    "photo": member['photo']
+                })
+        
+        messages_list = _get_last_messages(chat_id)
+        socket_connection_url = _get_websocket_url()
+        print("URL do WebSocket:", socket_connection_url)  # Log para verificar a URL do WebSocket
+        if not socket_connection_url:
+            return jsonify({"error": "URL do WebSocket não encontrada"}), 500
+        
+        socket_connection_url = socket_connection_url + f"ws?user_id={current_user['user_id']}&chats={chat_id}"
+        
+        return jsonify({
+            "chat_name": chat_name,
+            "user_list": user_list,
+            "messages_list": messages_list,
+            "socket_connection_url": socket_connection_url
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao acessar a página do chat: {str(e)}")
+        return jsonify({"error": "Erro ao acessar a página do chat"}), 500
