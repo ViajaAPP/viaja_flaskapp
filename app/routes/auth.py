@@ -149,4 +149,4 @@ def login():
         current_app.config['AUTH_CRYPT_KEY'],
         algorithm="HS256"
     )
-    return jsonify(token=token)
+    return jsonify(token=token, user_id=user['user_id']), 200
