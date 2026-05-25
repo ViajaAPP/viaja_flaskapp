@@ -64,7 +64,7 @@ def perform_handshake(conn: socket.socket, data: bytes) -> Optional[dict]:
         return None
 
     chat_ids_raw = params.get("chats", "")
-    chat_ids = [c.strip() for c in chat_ids_raw.split(",") if c.strip()]
+    chat_ids = [str(c).strip() for c in chat_ids_raw.split(",") if str(c).strip()]
 
     magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     key = headers["sec-websocket-key"] + magic
@@ -154,6 +154,8 @@ def publish(chat_id: str, payload: dict, sender_conn: socket.socket):
     Envia a mensagem para todos os subscribers do chat,
     exceto o remetente (comportamento típico de chat).
     """
+    chat_id = str(chat_id)
+
     with subscriptions_lock:
         subscribers = set(chat_subscriptions.get(chat_id, set()))
 
@@ -218,8 +220,10 @@ def handle_client(conn: socket.socket, addr):
                 chat_id = msg.get("chat_id")
                 text = msg.get("text")
 
-                if not chat_id or not text:
+                if chat_id is None or text is None or text == "":
                     continue
+
+                chat_id = str(chat_id)
 
                 envelope = {
                     "type": "message",
