@@ -1,5 +1,13 @@
 # README — API Flask (`viaja_flaskapp`)
 
+## Grupo
+
+Daniel Ferreira Pinheiro da Silva
+Érika Maria de Sousa
+Giovanna Nassar Lara Santos
+Marcos Rebouças Duarte da Silva
+Sophia Verardo de Araújo
+
 ## Visão geral
 Esta API foi construída com **Flask** e organizada para facilitar:
 - execução em outros ambientes;
