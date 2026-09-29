@@ -13,6 +13,8 @@ def find_tour_instance(tour_id, instance_id):
     return response.data[0] if response.data else None
 
 def find_address(address_id):
+    if address_id is None:
+        return None
     response = supabase.table("address").select("*").eq("id", address_id).execute()
     return response.data[0] if response.data else None
 
