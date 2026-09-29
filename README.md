@@ -42,21 +42,34 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 4) Configurar variáveis de ambiente
-Criar arquivo `.env` na raiz (exemplo):
-```env
-SUPABASE_URL=https://pxwjvoztqcdercllisuy.supabase.co
-SUPABASE_KEY=REMOVIDO
-NGROK_API_TOKEN=REMOVIDO
-NGROK_WS_TOKEN=REMOVIDO
-AUTH_CRYPT_KEY=REMOVIDO
-```
-
-## 5) Iniciar a API
+## 4) Rodar local, sem nenhum token
+Precisa do Docker aberto. O Supabase sobe na sua máquina com o schema e dados de teste.
 ```bash
+npx supabase start
+bash scripts/secrets.sh local
+python run.py --local
+```
+- API: `http://localhost:5000` (documentação em `/docs`)
+- WebSocket: `ws://localhost:8765`
+- Painel do banco: `http://localhost:54323`
+- Contas de teste, todas com a senha `viaja123`: `guia@viaja.local`, `viajante@viaja.local` e `admin@viaja.local`
+
+Para zerar o banco e voltar aos dados de teste: `npx supabase db reset`.
+
+No front, `npm start` já aponta para `http://localhost:5000`.
+
+## 5) Rodar com o Supabase e o ngrok de verdade
+Os segredos ficam no Google Secret Manager do projeto `viajaapp`, e não no repositório. Com acesso ao projeto:
+```bash
+gcloud auth login
+bash scripts/secrets.sh pull
 python run.py
 ```
-API disponível em: `http://127.0.0.1:5000` ou na URL do Ngrok.
+O `pull` escreve o `.env` com `SUPABASE_URL`, `SUPABASE_KEY`, `AUTH_CRYPT_KEY`, `NGROK_API_TOKEN` e `NGROK_WS_TOKEN`. O `.env` nunca vai para o git.
+
+Para trocar um segredo: `bash scripts/secrets.sh set SUPABASE_KEY` (o valor é colado no terminal e não aparece na tela). O script apaga as versões antigas para o projeto continuar dentro do free tier.
+
+Mudanças no banco ficam em `supabase/migrations`. Para aplicar no Supabase de verdade: `npx supabase link --project-ref <ref>` e depois `npx supabase db push`.
 
 ---
 
