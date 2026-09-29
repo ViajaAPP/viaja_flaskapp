@@ -1,13 +1,16 @@
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime, timezone
 from app.services.supabase_service import supabase
+from app.services import tour_service
+from app.models.enums import UserRole, RequestStatus
 from app.models.request_models import TourRequestCreateModel
-from app.utils.auth import token_required
+from app.utils.auth import token_required, role_required, can_moderate_tour
 
 request_bp = Blueprint('request', __name__)
 
 @request_bp.route('/instances/<int:tour_instance_id>', methods=['POST'])
 @token_required
+@role_required(UserRole.TOURIST)
 def create_tour_request(current_user, tour_instance_id):
     """
     Criar um novo tour request
@@ -15,11 +18,6 @@ def create_tour_request(current_user, tour_instance_id):
     tags:
         - Tour Requests
     """
-    # role do current_user deve ser TRAVELER
-    role = current_user.get('role')
-    if role != "TOURIST":
-        return jsonify({"error": "Acesso negado"}), 403
-    
     # recupera dados do tour request
     data = request.get_json()
     if not data:
@@ -32,7 +30,11 @@ def create_tour_request(current_user, tour_instance_id):
     
     tour_instance = tour_instance_response.data[0]
     
-    if tour_instance['status'] != "SCHEDULED":
+    tour = tour_service.find_tour(tour_instance['tour_id'])
+    if not tour or not tour['published']:
+        return jsonify({"error": "Tour não encontrado"}), 404
+
+    if not tour_service.is_instance_open_for_requests(tour_instance):
         return jsonify({"error": "O tour não está disponível para solicitações"}), 409
 
     # consulta quantas pessoas estão com solicitações aprovadas para esta instância de tour
@@ -64,6 +66,7 @@ def create_tour_request(current_user, tour_instance_id):
     
 @request_bp.route('/', methods=['GET'])
 @token_required
+@role_required(UserRole.TOURIST)
 def list_user_requests(current_user):
     """
     Listar solicitações do usuário
@@ -71,11 +74,6 @@ def list_user_requests(current_user):
     tags:
         - Tour Requests
     """
-    # role do current_user deve ser TOURIST ou GUIDE
-    role = current_user.get('role')
-    if role not in ["TOURIST"]:
-        return jsonify({"error": "Acesso negado"}), 403
-    
     try:
         # buscar informações da request, do tour instance e do tour para cada request do usuário
         requests_response = supabase.table("tour_request").select("*, tour_instance(*, tour(*))").eq("requester_id", current_user['user_id']).execute()
@@ -87,6 +85,7 @@ def list_user_requests(current_user):
 
 @request_bp.route('/instances/<int:tour_instance_id>', methods=['GET'])
 @token_required
+@role_required(UserRole.TOURIST, UserRole.GUIDE, UserRole.ADMIN)
 def list_tour_requests(current_user, tour_instance_id):
     # Donos da tour podem ver solicitações de todos os status (e com filtro também), enquanto turistas só podem ver suas próprias solicitações e as de quem já foi aceito.
     """
@@ -116,11 +115,7 @@ def list_tour_requests(current_user, tour_instance_id):
         500:
             description: Erro ao buscar solicitações para a instância de tour
     """
-    # role do current_user deve ser TOURIST ou GUIDE
     role = current_user.get('role')
-    if role not in ["TOURIST", "GUIDE"]:
-        return jsonify({"error": "Acesso negado"}), 403
-    
     status = request.args.get('status', None)
     # verifica se a instância de tour existe
     tour_instance_response = supabase.table("tour_instance").select("*").eq("id", tour_instance_id).execute()
@@ -134,14 +129,20 @@ def list_tour_requests(current_user, tour_instance_id):
         accepted_requests_response = supabase.table("tour_request").select("*").eq("tour_instance_id", tour_instance_id).eq("status", "ACCEPTED").execute()
         requests = requests_response.data + accepted_requests_response.data
     else:
+        tour = tour_service.find_tour(tour_instance['tour_id'])
+        if not tour or not can_moderate_tour(tour, current_user):
+            return jsonify({"error": "Acesso negado"}), 403
         requests_response = supabase.table("tour_request").select("*, tour_instance(*, tour(*))").eq("tour_instance_id", tour_instance_id).execute()
         requests = requests_response.data
         if status:
             requests = [r for r in requests if r['status'] == status]
+        requesters = tour_service.find_users({r['requester_id'] for r in requests})
+        requests = [{**r, "requester": requesters.get(r['requester_id'])} for r in requests]
     return jsonify(requests), 200
     
 @request_bp.route('/<int:request_id>', methods=['PATCH'])
 @token_required
+@role_required(UserRole.GUIDE)
 def update_tour_request_status(current_user, request_id):
     """
     Atualizar o status de um tour request (aceitar ou recusar)
@@ -171,7 +172,7 @@ def update_tour_request_status(current_user, request_id):
         return jsonify({"error": "Dados de atualização ausentes ou inválidos"}), 400
     
     new_status = data['status']
-    if new_status not in ["ACCEPTED", "DENIED"]:
+    if new_status not in [RequestStatus.ACCEPTED, RequestStatus.DENIED]:
         return jsonify({"error": "Dados de atualização ausentes ou inválidos"}), 400
     
     if new_status == "ACCEPTED":
@@ -182,7 +183,9 @@ def update_tour_request_status(current_user, request_id):
             return jsonify({"error": "O tour está preenchido"}), 409
 
     try:
-        supabase.table("tour_request").update({"status": new_status, "last_update": datetime.now(timezone.utc).isoformat()}).eq("id", request_id).execute()
+        supabase.table("tour_request").update({"status": new_status, "last_updated": datetime.now(timezone.utc).isoformat()}).eq("id", request_id).execute()
+        if new_status == RequestStatus.ACCEPTED:
+            tour_service.close_registration_if_full(tour_instance_response.data[0])
         return jsonify({"message": "Status do tour request atualizado com sucesso!"}), 200
     except Exception as e:
         current_app.logger.error(f"Exceção ao atualizar status do tour request: {str(e)}")
