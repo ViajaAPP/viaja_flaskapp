@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
 from app.utils.auth import token_required
+from app.services import tour_service
 from app.routes.chat import _get_last_messages
 from app.routes.socket import _get_websocket_url
 from datetime import timedelta, datetime, timezone
@@ -49,8 +50,9 @@ def home(current_user):
         # parametro: 20 tours que tiveram mais membros integrando no total
         tours_response = supabase.rpc("get_popular_tours").execute()
         popular_tours = []
+        published_tour_ids = tour_service.list_published_tour_ids()
         if tours_response.data:
-            for tour in tours_response.data:
+            for tour in [tour for tour in tours_response.data if tour['id'] in published_tour_ids]:
                 popular_tours.append({
                     "id": tour['id'],
                     "title": tour['title'],
@@ -115,6 +117,7 @@ def chats(current_user):
     """
     try:
         tour_list = []
+        tours_response = None
         if current_user['role'] == 'GUIDE':
             # busca os tours dele que tem mais de uma pessoa participando
             tours_response = supabase.rpc("get_tours_guide", {"guide_id": current_user['user_id']}).execute()
@@ -122,7 +125,7 @@ def chats(current_user):
             # busca os tours que ele está participando
             tours_response = supabase.rpc("get_tours_tourist", {"tourist_id": current_user['user_id']}).execute()
 
-        for tour in tours_response.data:
+        for tour in tours_response.data if tours_response else []:
             tour_date = ''
             current_time = datetime.now(timezone.utc)
             
@@ -228,3 +231,14 @@ def chat(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página do chat: {str(e)}")
         return jsonify({"error": "Erro ao acessar a página do chat"}), 500
+@pages_bp.route('/profile', methods=['POST'])
+@token_required
+def profile(current_user):
+    try:
+        user_response = supabase.table("user").select("first_name, last_name, email, photo, role").eq("user_id", current_user['user_id']).execute()
+        if not user_response.data:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+        return jsonify(user_response.data[0]), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao acessar a página de perfil: {str(e)}")
+        return jsonify({"error": "Erro ao acessar a página de perfil"}), 500
