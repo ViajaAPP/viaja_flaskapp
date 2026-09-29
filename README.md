@@ -59,15 +59,15 @@ Para zerar o banco e voltar aos dados de teste: `npx supabase db reset`.
 No front, `npm start` já aponta para `http://localhost:5000`.
 
 ## 5) Rodar com o Supabase e o ngrok de verdade
-Os segredos ficam no Google Secret Manager do projeto `viajaapp`, e não no repositório. Com acesso ao projeto:
+Os segredos ficam num arquivo privado no Google Drive, o `viaja-backend.env`, e não no repositório. Não precisa de faturamento no Google Cloud. Quem precisar das chaves recebe acesso a esse arquivo pelo próprio Drive.
 ```bash
-gcloud auth login
+gcloud auth login --enable-gdrive-access
 bash scripts/secrets.sh pull
 python run.py
 ```
 O `pull` escreve o `.env` com `SUPABASE_URL`, `SUPABASE_KEY`, `AUTH_CRYPT_KEY`, `NGROK_API_TOKEN` e `NGROK_WS_TOKEN`. O `.env` nunca vai para o git.
 
-Para trocar um segredo: `bash scripts/secrets.sh set SUPABASE_KEY` (o valor é colado no terminal e não aparece na tela). O script apaga as versões antigas para o projeto continuar dentro do free tier.
+Para trocar um segredo: `bash scripts/secrets.sh set SUPABASE_KEY` (o valor é colado no terminal e não aparece na tela). Para mandar um `.env` inteiro: `bash scripts/secrets.sh push <arquivo>`.
 
 Mudanças no banco ficam em `supabase/migrations`. Para aplicar no Supabase de verdade: `npx supabase link --project-ref <ref>` e depois `npx supabase db push`.
 

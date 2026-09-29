@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJETO="${GCP_PROJECT:-viajaapp}"
 CONFIGURACAO_GCLOUD="${GCLOUD_CONFIG:-viaja}"
+NOME_NO_DRIVE="${DRIVE_FILE:-viaja-backend.env}"
 ARQUIVO_ENV="${ENV_FILE:-.env}"
 URL_WS_LOCAL="ws://localhost:8765"
-
-SEGREDOS=(
-  "SUPABASE_URL:supabase-url"
-  "SUPABASE_KEY:supabase-key"
-  "AUTH_CRYPT_KEY:auth-crypt-key"
-  "NGROK_API_TOKEN:ngrok-api-token"
-  "NGROK_WS_TOKEN:ngrok-ws-token"
-)
+DRIVE="https://www.googleapis.com/drive/v3/files"
+DRIVE_UPLOAD="https://www.googleapis.com/upload/drive/v3/files"
+VARIAVEIS="SUPABASE_URL SUPABASE_KEY AUTH_CRYPT_KEY NGROK_API_TOKEN NGROK_WS_TOKEN"
 
 ok()    { printf '  . %s\n' "$1"; }
 aviso() { printf '  ! %s\n' "$1" >&2; }
@@ -23,46 +18,50 @@ usa_configuracao_do_projeto() {
   fi
 }
 
+token() {
+  gcloud auth print-access-token 2>/dev/null || {
+    aviso "Sem login no Google. Rode: gcloud auth login --enable-gdrive-access"
+    exit 1
+  }
+}
+
+drive() {
+  curl -sS --fail-with-body -H "Authorization: Bearer $(token)" "$@"
+}
+
+id_do_arquivo() {
+  drive -G "$DRIVE" \
+    --data-urlencode "q=name = '$NOME_NO_DRIVE' and trashed = false and 'me' in owners" \
+    --data-urlencode "fields=files(id)" \
+    | python -c "import json, sys; arquivos = json.load(sys.stdin)['files']; print(arquivos[0]['id'] if arquivos else '', end='')"
+}
+
+cria_arquivo() {
+  drive -X POST "$DRIVE?fields=id" -H "Content-Type: application/json" \
+    -d "{\"name\": \"$NOME_NO_DRIVE\", \"mimeType\": \"text/plain\"}" \
+    | python -c "import json, sys; print(json.load(sys.stdin)['id'], end='')"
+}
+
+baixa_do_drive() {
+  local id
+  id="$(id_do_arquivo)"
+  if [[ -z "$id" ]]; then
+    aviso "Não achei '$NOME_NO_DRIVE' no seu Drive. Suba com: scripts/secrets.sh push <arquivo>"
+    exit 1
+  fi
+  drive "$DRIVE/$id?alt=media"
+}
+
+sobe_para_o_drive() {
+  local id
+  id="$(id_do_arquivo)"
+  [[ -n "$id" ]] || id="$(cria_arquivo)"
+  drive -X PATCH "$DRIVE_UPLOAD/$id?uploadType=media" -H "Content-Type: text/plain" --data-binary @- >/dev/null
+  ok "$NOME_NO_DRIVE atualizado no Drive"
+}
+
 gera_chave() {
   python -c "import secrets; print(secrets.token_urlsafe(48), end='')"
-}
-
-nome_do_segredo() {
-  local variavel="$1" par
-  for par in "${SEGREDOS[@]}"; do
-    if [[ "${par%%:*}" == "$variavel" || "${par##*:}" == "$variavel" ]]; then
-      printf '%s' "${par##*:}"
-      return
-    fi
-  done
-  aviso "Não conheço '$variavel'. Opções: ${SEGREDOS[*]}"
-  exit 1
-}
-
-tem_valor() {
-  gcloud secrets versions describe latest --secret="$1" --project="$PROJETO" >/dev/null 2>&1
-}
-
-garante_segredo() {
-  gcloud secrets describe "$1" --project="$PROJETO" >/dev/null 2>&1 && return
-  gcloud secrets create "$1" --project="$PROJETO" --replication-policy=automatic >/dev/null
-}
-
-apaga_versoes_antigas() {
-  local segredo="$1" ultima versao
-  ultima="$(gcloud secrets versions list "$segredo" --project="$PROJETO" --filter="state=ENABLED" --sort-by="~createTime" --limit=1 --format="value(name.basename())")"
-  for versao in $(gcloud secrets versions list "$segredo" --project="$PROJETO" --filter="state!=DESTROYED" --format="value(name.basename())"); do
-    [[ "$versao" == "$ultima" ]] && continue
-    gcloud secrets versions destroy "$versao" --secret="$segredo" --project="$PROJETO" --quiet >/dev/null
-  done
-}
-
-grava_do_stdin() {
-  local segredo="$1"
-  garante_segredo "$segredo"
-  gcloud secrets versions add "$segredo" --project="$PROJETO" --data-file=- >/dev/null
-  apaga_versoes_antigas "$segredo"
-  ok "$segredo gravado"
 }
 
 escreve_env() {
@@ -72,6 +71,23 @@ escreve_env() {
   chmod 600 "$temporario"
   mv "$temporario" "$ARQUIVO_ENV"
   ok "$ARQUIVO_ENV escrito"
+}
+
+troca_variavel() {
+  local variavel="$1" valor="$2"
+  VARIAVEL="$variavel" VALOR="$valor" python -c "
+import os, sys
+variavel, valor = os.environ['VARIAVEL'], os.environ['VALOR']
+linhas = [linha for linha in sys.stdin.read().splitlines() if not linha.startswith(variavel + '=')]
+linhas.append(variavel + '=' + valor)
+print('\n'.join(linha for linha in linhas if linha.strip()))
+"
+}
+
+confere_variavel() {
+  [[ " $VARIAVEIS " == *" $1 "* ]] && return
+  aviso "Não conheço '$1'. Opções: $VARIAVEIS"
+  exit 1
 }
 
 valor_atual() {
@@ -96,51 +112,53 @@ comando_local() {
 
 comando_pull() {
   usa_configuracao_do_projeto
-  local par variavel segredo valor
-  {
-    for par in "${SEGREDOS[@]}"; do
-      variavel="${par%%:*}"
-      segredo="${par##*:}"
-      if ! valor="$(gcloud secrets versions access latest --secret="$segredo" --project="$PROJETO" 2>/dev/null)"; then
-        aviso "$segredo ainda não tem valor no projeto $PROJETO"
-        continue
-      fi
-      printf '%s=%s\n' "$variavel" "$valor"
-    done
-  } | escreve_env
+  baixa_do_drive | escreve_env
+}
+
+comando_push() {
+  usa_configuracao_do_projeto
+  local arquivo="${1:?Informe o arquivo .env que vai para o Drive}"
+  [[ -f "$arquivo" ]] || { aviso "Arquivo '$arquivo' não existe"; exit 1; }
+  sobe_para_o_drive < "$arquivo"
 }
 
 comando_set() {
   usa_configuracao_do_projeto
-  local segredo valor
-  segredo="$(nome_do_segredo "${1:?Informe qual: ${SEGREDOS[*]}}")"
-  printf 'Cole o valor de %s e tecle Enter: ' "$segredo"
+  local variavel="${1:?Informe qual: $VARIAVEIS}" valor atual
+  confere_variavel "$variavel"
+  printf 'Cole o valor de %s e tecle Enter: ' "$variavel"
   read -rs valor
   echo
-  printf '%s' "$valor" | grava_do_stdin "$segredo"
-  unset valor
+  atual="$(baixa_do_drive 2>/dev/null || true)"
+  printf '%s' "$atual" | troca_variavel "$variavel" "$valor" | sobe_para_o_drive
+  unset valor atual
 }
 
 comando_gerar() {
   usa_configuracao_do_projeto
-  if tem_valor auth-crypt-key; then
-    ok "auth-crypt-key já tem valor. Trocar desloga todo mundo; use 'set AUTH_CRYPT_KEY' se for isso mesmo"
+  local atual
+  atual="$(baixa_do_drive 2>/dev/null || true)"
+  if printf '%s\n' "$atual" | grep -qE '^AUTH_CRYPT_KEY=.+'; then
+    ok "AUTH_CRYPT_KEY já tem valor. Trocar desloga todo mundo; use 'set AUTH_CRYPT_KEY' se for isso mesmo"
     return
   fi
-  gera_chave | grava_do_stdin auth-crypt-key
+  printf '%s' "$atual" | troca_variavel AUTH_CRYPT_KEY "$(gera_chave)" | sobe_para_o_drive
+  unset atual
 }
 
 case "${1:-}" in
   local) comando_local ;;
   pull)  comando_pull ;;
+  push)  comando_push "${2:-}" ;;
   set)   comando_set "${2:-}" ;;
   gerar) comando_gerar ;;
   *)
-    echo "Uso: scripts/secrets.sh local | pull | set <NOME> | gerar"
+    echo "Uso: scripts/secrets.sh local | pull | push <arquivo> | set <NOME> | gerar"
     echo "  local  escreve o .env apontando para o Supabase local, sem tokens"
-    echo "  pull   escreve o .env com os segredos do Secret Manager ($PROJETO)"
-    echo "  set    grava um segredo novo e apaga as versões antigas"
-    echo "  gerar  cria a AUTH_CRYPT_KEY aleatória no Secret Manager"
+    echo "  pull   escreve o .env com o arquivo $NOME_NO_DRIVE do seu Google Drive"
+    echo "  push   manda um .env inteiro para o Drive"
+    echo "  set    troca um valor no arquivo do Drive"
+    echo "  gerar  cria a AUTH_CRYPT_KEY aleatória no arquivo do Drive"
     exit 1
     ;;
 esac
