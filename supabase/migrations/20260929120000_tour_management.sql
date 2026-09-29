@@ -11,6 +11,16 @@ alter table public.tour_instance
   add constraint tour_instance_registration_check
   check (registration in ('OPEN', 'FULL', 'CLOSED'));
 
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'tour_request' and column_name = 'last_update'
+  ) then
+    alter table public.tour_request rename column last_update to last_updated;
+  end if;
+end $$;
+
 alter table public.tour_request
   add column if not exists last_updated timestamptz;
 
