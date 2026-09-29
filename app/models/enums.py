@@ -5,6 +5,11 @@ class TourStatus(str, Enum):
     DONE = "DONE"
     CANCELED = "CANCELED"
 
+class RegistrationStatus(str, Enum):
+    OPEN = "OPEN"
+    FULL = "FULL"
+    CLOSED = "CLOSED"
+
 class RequestStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
@@ -14,6 +19,7 @@ class UserRole(str, Enum):
     TOURIST = "TOURIST"
     GUIDE = "GUIDE"
     EVENT_PROMOTER = "EVENT_PROMOTER"
+    ADMIN = "ADMIN"
     
 class UF(str, Enum):
     AC = "AC"

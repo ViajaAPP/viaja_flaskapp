@@ -6,6 +6,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import supabase
+from app.models.enums import UserRole
 
 cnaes_turismo = [7911200, 7912100]
 cnaes_eventos = [8230001]
@@ -71,6 +72,9 @@ def add_user():
         return jsonify({"error": f"Dados de usuário inválidos: {e}"}), 400
     except Exception as e:
         return jsonify({"error": f"Erro ao criar usuário: {e}"}), 400
+
+    if user.role == UserRole.ADMIN:
+        return jsonify({"error": "Não é possível se cadastrar como administrador"}), 403
 
     if user.role and user.role != "TOURIST":
         if not user.cnpj: # não é turista: cnpj é requerido
@@ -149,4 +153,4 @@ def login():
         current_app.config['AUTH_CRYPT_KEY'],
         algorithm="HS256"
     )
-    return jsonify(token=token, user_id=user['user_id']), 200
+    return jsonify(token=token, user_id=user['user_id'], role=user['role']), 200
