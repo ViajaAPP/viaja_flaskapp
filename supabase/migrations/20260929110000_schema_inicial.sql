@@ -120,9 +120,9 @@ begin
 
   if not exists (select 1 from pg_proc where proname = 'get_popular_tours') then
     create function public.get_popular_tours()
-    returns table (id bigint, title text, photo text, guide text, guidephoto text, qt_turistas bigint)
+    returns table (id bigint, title text, photo text, guidephoto text, guide text, qt_turistas bigint)
     language sql stable as $body$
-      select t.id, t.title, t.photo, u.first_name, u.photo, count(tr.id)
+      select t.id, t.title, t.photo, u.photo, u.first_name, count(tr.id)
       from public.tour t
       join public."user" u on u.user_id = t.created_by_id
       left join public.tour_instance ti on ti.tour_id = t.id
@@ -166,9 +166,9 @@ begin
 
   if not exists (select 1 from pg_proc where proname = 'get_tour_by_chat') then
     create function public.get_tour_by_chat(chat_id bigint)
-    returns table (tour_id bigint, tour_instance_id bigint, tour_title text)
+    returns table (tour_id bigint, tour_instance_id bigint, tour_title text, tour_photo text, start_time timestamptz)
     language sql stable as $body$
-      select t.id, ti.id, t.title
+      select t.id, ti.id, t.title, t.photo, ti.start_time
       from public.chat c
       join public.tour_instance ti on ti.id = c.tour_instance_id
       join public.tour t on t.id = ti.tour_id
