@@ -12,7 +12,8 @@ import os
 load_dotenv()
 
 NGROK_AUTH_TOKEN = os.getenv('NGROK_WS_TOKEN')
-ngrok.set_auth_token(NGROK_AUTH_TOKEN)
+if NGROK_AUTH_TOKEN:
+    ngrok.set_auth_token(NGROK_AUTH_TOKEN)
 
 chat_subscriptions: dict[str, set[socket.socket]] = {}
 client_meta: dict[socket.socket, dict] = {}

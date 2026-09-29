@@ -45,6 +45,7 @@ app = create_app()
 if __name__ == "__main__":
     only_api = "--api" in sys.argv
     only_ws = "--ws" in sys.argv
+    is_local = "--local" in sys.argv
 
     if only_api and only_ws:
         print(" * Erro: Não pode iniciar ambos os serviços com os argumentos --api e --ws.")
@@ -56,7 +57,13 @@ if __name__ == "__main__":
     is_flask_reloader = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
 
     if not is_flask_reloader:
-        if NGROK_WS_TOKEN and NGROK_API_TOKEN:
+        if is_local and only_ws:
+            start_server_socket()
+        elif is_local:
+            if not only_api:
+                threading.Thread(target=start_server_socket, daemon=True).start()
+                print(" * WebSocket local em ws://localhost:8765")
+        elif NGROK_WS_TOKEN and NGROK_API_TOKEN:
             config_api = conf.PyngrokConfig(auth_token=NGROK_API_TOKEN)
             config_ws = conf.PyngrokConfig(auth_token=NGROK_WS_TOKEN)
 
