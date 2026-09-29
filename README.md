@@ -11,8 +11,28 @@ Esta API foi construída com **Flask** e organizada para facilitar:
 ## Requisitos
 - Python **3.9+**
 - `pip`
-- Git
-- Banco de dados configurado via variáveis de ambiente (ex.: SQLite/PostgreSQL)
+- Git (no Windows, use o Git Bash para rodar os scripts `.sh`)
+- Node.js, para o `npx supabase`
+- Docker, para rodar o banco local
+- Google Cloud SDK (`gcloud`), para baixar as chaves de produção
+
+---
+
+## O que tem de novo na `staging`
+A `staging` é a versão que está funcionando. Em relação à `main`:
+
+- **Papéis e permissões**: `TOURIST`, `GUIDE`, `EVENT_PROMOTER` e o novo `ADMIN`. A conferência de papel fica no decorator `role_required` e a de dono do passeio em `is_tour_owner` e `can_moderate_tour` (`app/utils/auth.py`). Ninguém se cadastra como `ADMIN` pelo app.
+- **Gestão de passeios pelo guia** (`app/routes/tour.py`):
+  - `GET /tour/mine`: os passeios do guia (o admin vê todos)
+  - `GET /tour/<id>`: detalhe com endereço, guia e datas; rascunho só aparece para o dono e o admin
+  - `PATCH /tour/<id>`: editar (só o dono)
+  - `PATCH /tour/<id>/publish`: publicar ou tirar do ar (dono ou admin)
+  - `PATCH /tour/<id>/instance/<iid>`: vagas, status e se a data está recebendo pedidos
+- **Pedidos de vaga** (`app/routes/request.py`): só em passeio publicado, com data futura e recebendo pedidos. Só o dono e o admin veem os pedidos de uma data. Quando o guia aceita a última vaga, a data fica esgotada sozinha.
+- **Página de perfil**: `POST /pages/profile`.
+- **Banco versionado** em `supabase/migrations`, com seed de teste em `supabase/seed.sql`.
+- **Modo local** sem token nenhum (`python run.py --local`).
+- **Chaves fora do repositório**: ficam num arquivo privado no Google Drive (veja o passo 5).
 
 ---
 
@@ -20,9 +40,12 @@ Esta API foi construída com **Flask** e organizada para facilitar:
 
 ## 1) Clonar o projeto
 ```bash
-git clone https://github.com/sweetsoph/viaja_flaskapp.git
+git clone https://github.com/ViajaAPP/viaja_flaskapp.git
 cd viaja_flaskapp
+git checkout staging
 ```
+
+Quem já tinha o repositório clonado antes de 29/09/2026 precisa **apagar e clonar de novo**: o histórico foi reescrito para tirar chaves que estavam no README. Um push de um clone antigo traz as chaves de volta.
 
 ## 2) Criar e ativar ambiente virtual
 ### Windows (PowerShell)
@@ -59,17 +82,49 @@ Para zerar o banco e voltar aos dados de teste: `npx supabase db reset`.
 No front, `npm start` já aponta para `http://localhost:5000`.
 
 ## 5) Rodar com o Supabase e o ngrok de verdade
-Os segredos ficam num arquivo privado no Google Drive, o `viaja-backend.env`, e não no repositório. Não precisa de faturamento no Google Cloud. Quem precisar das chaves recebe acesso a esse arquivo pelo próprio Drive.
-```bash
-gcloud auth login --enable-gdrive-access
-bash scripts/secrets.sh pull
-python run.py
-```
-O `pull` escreve o `.env` com `SUPABASE_URL`, `SUPABASE_KEY`, `AUTH_CRYPT_KEY`, `NGROK_API_TOKEN` e `NGROK_WS_TOKEN`. O `.env` nunca vai para o git.
+As chaves de produção não ficam no repositório. Elas ficam no arquivo privado `viaja-backend.env`, no Google Drive da Erika, e o script `scripts/secrets.sh` baixa esse arquivo e escreve o `.env`. Não precisa de faturamento no Google Cloud.
 
-Para trocar um segredo: `bash scripts/secrets.sh set SUPABASE_KEY` (o valor é colado no terminal e não aparece na tela). Para mandar um `.env` inteiro: `bash scripts/secrets.sh push <arquivo>`.
+### Como pegar as chaves
+1. **Peça acesso à Erika.** Ela compartilha o `viaja-backend.env` com o seu email do Google. Quem já tem acesso: Sophia, Marcos e Giovanna.
+2. **Instale o Google Cloud SDK** (`gcloud`) e entre com esse mesmo email, dando acesso ao Drive:
+   ```bash
+   gcloud auth login --enable-gdrive-access
+   ```
+   Se você já usa o `gcloud` com outra conta (do trabalho, por exemplo), crie uma configuração separada para o Viaja antes do login, e o script passa a usar ela sozinho:
+   ```bash
+   gcloud config configurations create viaja --no-activate
+   CLOUDSDK_ACTIVE_CONFIG_NAME=viaja gcloud auth login --enable-gdrive-access
+   ```
+3. **Baixe as chaves e suba a API:**
+   ```bash
+   bash scripts/secrets.sh pull
+   python run.py
+   ```
 
-Mudanças no banco ficam em `supabase/migrations`. Para aplicar no Supabase de verdade: `npx supabase link --project-ref <ref>` e depois `npx supabase db push`.
+O `pull` escreve o `.env` com:
+
+| Variável | Para que serve |
+| --- | --- |
+| `SUPABASE_URL`, `SUPABASE_KEY` | acesso ao banco de produção |
+| `AUTH_CRYPT_KEY` | assina o token de login do app |
+| `NGROK_API_TOKEN`, `NGROK_WS_TOKEN` | abrem os túneis da API e do WebSocket |
+| `FLASK_ENV` | modo do Flask |
+| `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | usadas para aplicar migrations no banco de produção |
+
+O `.env` nunca vai para o git. Para voltar ao banco local depois, rode `bash scripts/secrets.sh local`.
+
+### Trocar ou acrescentar uma chave
+Só quem tem permissão de edição no arquivo do Drive consegue:
+- `bash scripts/secrets.sh set SUPABASE_KEY`: troca uma chave. O valor é colado no terminal e não aparece na tela.
+- `bash scripts/secrets.sh push <arquivo>`: manda um `.env` inteiro.
+- `bash scripts/secrets.sh gerar`: cria uma `AUTH_CRYPT_KEY` aleatória, se ela ainda não existir.
+
+### Banco de produção
+Mudanças de estrutura ficam em `supabase/migrations`:
+- `20260929110000_schema_inicial.sql`: tabelas e funções que o código usa. Não muda nada que já exista no banco.
+- `20260929120000_tour_management.sql`: colunas `tour.published`, `tour_instance.registration` e `tour_request.last_updated`. **Precisa estar aplicada em produção** para as rotas de passeio funcionarem.
+
+Para aplicar: `npx supabase link --project-ref <SUPABASE_PROJECT_REF>` e depois `npx supabase db push`.
 
 ---
 
@@ -82,6 +137,11 @@ viaja_flaskapp/
 │  ├─ models/              # entidades do banco
 │  ├─ routes/              # blueprints/endpoints
 │  ├─ services/            # regras de negócio
+│  ├─ utils/auth.py        # login e permissões por papel
+├─ scripts/secrets.sh      # chaves: pull, set, push, gerar e local
+├─ supabase/
+│  ├─ migrations/          # estrutura do banco
+│  ├─ seed.sql             # dados de teste do banco local
 ├─ requirements.txt
 └─ README.md
 ```
