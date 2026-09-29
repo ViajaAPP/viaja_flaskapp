@@ -31,7 +31,7 @@ drive() {
 
 id_do_arquivo() {
   drive -G "$DRIVE" \
-    --data-urlencode "q=name = '$NOME_NO_DRIVE' and trashed = false and 'me' in owners" \
+    --data-urlencode "q=name = '$NOME_NO_DRIVE' and trashed = false" \
     --data-urlencode "fields=files(id)" \
     | python -c "import json, sys; arquivos = json.load(sys.stdin)['files']; print(arquivos[0]['id'] if arquivos else '', end='')"
 }
