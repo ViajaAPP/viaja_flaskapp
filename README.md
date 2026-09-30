@@ -21,7 +21,7 @@ Esta API foi construída com **Flask** e organizada para facilitar:
 - Git (no Windows, use o Git Bash para rodar os scripts `.sh`)
 - Node.js, para o `npx supabase`
 - Docker, para rodar o banco local
-- Google Cloud SDK (`gcloud`), para baixar as chaves de produção
+- Google Cloud SDK (`gcloud`), para baixar as chaves de produção: https://cloud.google.com/sdk/docs/install
 
 ---
 
@@ -37,6 +37,9 @@ A `staging` é a versão que está funcionando. Em relação à `main`:
   - `PATCH /tour/<id>/instance/<iid>`: vagas, status e se a data está recebendo pedidos
 - **Pedidos de vaga** (`app/routes/request.py`): só em passeio publicado, com data futura e recebendo pedidos. Só o dono e o admin veem os pedidos de uma data. Quando o guia aceita a última vaga, a data fica esgotada sozinha.
 - **Página de perfil**: `POST /pages/profile`.
+- **Cidades pela CidadesBR-API** (veja a seção própria mais abaixo):
+  - `GET /cidades/busca?q=<texto>&uf=<UF>`: sugestões de cidade para o formulário do passeio
+  - `GET /tour/perto?lat=<lat>&lon=<lon>`: passeios publicados, do mais perto para o mais longe
 - **Banco versionado** em `supabase/migrations`, com seed de teste em `supabase/seed.sql`.
 - **Modo local** sem token nenhum (`python run.py --local`).
 - **Chaves fora do repositório**: ficam num arquivo privado no Google Drive (veja o passo 5).
@@ -88,6 +91,8 @@ Para zerar o banco e voltar aos dados de teste: `npx supabase db reset`.
 
 No front, `npm start` já aponta para `http://localhost:5000`.
 
+No modo local, as rotas de cidade usam a CidadesBR-API publicada, sem precisar de chave. Se ela estiver dormindo, a primeira busca pode levar perto de um minuto.
+
 ## 5) Rodar com o Supabase e o ngrok de verdade
 As chaves de produção não ficam no repositório. Elas ficam no arquivo privado `viaja-backend.env`, no Google Drive da Erika, e o script `scripts/secrets.sh` baixa esse arquivo e escreve o `.env`. Não precisa de faturamento no Google Cloud.
 
@@ -117,6 +122,8 @@ O `pull` escreve o `.env` com:
 | `NGROK_API_TOKEN`, `NGROK_WS_TOKEN` | abrem os túneis da API e do WebSocket |
 | `FLASK_ENV` | modo do Flask |
 | `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | usadas para aplicar migrations no banco de produção |
+| `CIDADESBR_API_URL` | endereço da CidadesBR-API. Sem ela, o back usa `https://cidadesbr-api.onrender.com` |
+| `CIDADESBR_ADMIN_API_KEY` | chave das rotas `/admin` da CidadesBR-API. O back não usa; serve para consultar o uso da API |
 
 O `.env` nunca vai para o git. Para voltar ao banco local depois, rode `bash scripts/secrets.sh local`.
 
@@ -129,9 +136,29 @@ Só quem tem permissão de edição no arquivo do Drive consegue:
 ### Banco de produção
 Mudanças de estrutura ficam em `supabase/migrations`:
 - `20260929110000_schema_inicial.sql`: tabelas e funções que o código usa. Não muda nada que já exista no banco.
-- `20260929120000_tour_management.sql`: colunas `tour.published`, `tour_instance.registration` e `tour_request.last_updated`. **Precisa estar aplicada em produção** para as rotas de passeio funcionarem.
+- `20260929120000_tour_management.sql`: cria `tour.published` e `tour_instance.registration`, renomeia `tour_request.last_update` para `last_updated` e acrescenta `ADMIN` ao papel do usuário. Já está aplicada em produção.
 
 Para aplicar: `npx supabase link --project-ref <SUPABASE_PROJECT_REF>` e depois `npx supabase db push`.
+
+### CidadesBR-API
+É a API de municípios brasileiros feita para o Viaja: nome, UF, coordenadas e código do IBGE de cada cidade. Está publicada em `https://cidadesbr-api.onrender.com` (documentação em `/docs`).
+
+- O back chama a API em `app/services/cidades_service.py`, com tempo limite de 60 segundos e cache de 24 horas por consulta. O cache segura o Render dormindo e o limite de 60 chamadas por minuto da API.
+- `GET /tour/perto` pega a cidade e a UF do endereço de cada passeio publicado, busca as coordenadas da cidade e calcula a distância até o ponto recebido. Passeio sem endereço, ou com cidade que a API não conhece, fica de fora.
+- Para ver o uso da API, com a `CIDADESBR_ADMIN_API_KEY` no `.env`:
+  ```bash
+  source .env && curl -H "X-Admin-Key: $CIDADESBR_ADMIN_API_KEY" "$CIDADESBR_API_URL/admin/usage"
+  ```
+
+### Problemas comuns
+| Mensagem | O que fazer |
+| --- | --- |
+| `Sem login no Google. Rode: gcloud auth login --enable-gdrive-access` | Faça o login do passo 2. Se usa uma configuração separada, rode com `CLOUDSDK_ACTIVE_CONFIG_NAME=viaja` na frente. |
+| `Não achei 'viaja-backend.env' no seu Drive` | O arquivo ainda não foi compartilhado com o email do login, ou o login foi feito com outro email. Confira com `gcloud auth list`. |
+| `Não conheço '<NOME>'` | A variável não está na lista do `scripts/secrets.sh`. Use uma das opções que a mensagem mostra. |
+| `O Supabase local não está rodando` | Abra o Docker e rode `npx supabase start`. |
+| `bash: scripts/secrets.sh: No such file or directory` | Rode os comandos a partir da pasta `viaja_flaskapp`. No Windows, use o Git Bash. |
+| A busca de cidade ou o "mais perto" demora na primeira vez | É a CidadesBR-API acordando no Render. As próximas respostas saem do cache. |
 
 ---
 
