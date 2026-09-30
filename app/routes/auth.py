@@ -149,13 +149,13 @@ def login():
     try:
         supabase_response = supabase.table("user").select("user_id, email, password, role").eq("email", data["email"]).execute()
         if not supabase_response.data:
-            return jsonify(message="Credenciais inválidas!"), 401
+            return jsonify(message="Email ou senha não conferem. Confere e tenta de novo."), 401
         user = supabase_response.data[0]
     except Exception as e:
         return jsonify(message=f"Erro ao buscar usuário no banco de dados: {e}"), 500
 
     if not bcrypt.checkpw(data["password"].encode('utf-8'), user["password"].encode('utf-8')):
-        return jsonify(message="Credenciais inválidas!"), 401
+        return jsonify(message="Email ou senha não conferem. Confere e tenta de novo."), 401
 
     # Gerar o token com expiração
     token = jwt.encode(
