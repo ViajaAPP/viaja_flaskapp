@@ -113,6 +113,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
     guias = tour_service.find_users({p["created_by_id"] for p in passeios})
     favoritos = tour_service.list_favorite_tour_ids(user_id)
     curtidas = tour_service.count_favorites_by_tour()
+    pedidos = tour_service.count_requests_by_tour()
     avaliacoes = review_service.summary_by_tour()
     janela = _janela(quando)
     alvo = _sem_acento(texto)
@@ -159,6 +160,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
             "rating": nota.get("average"),
             "reviewCount": nota.get("count", 0),
             "likes": curtidas.get(passeio["id"], 0),
+            "searches": pedidos.get(passeio["id"], 0),
             "nextDate": saidas[0].isoformat() if saidas else None,
             "favorite": passeio["id"] in favoritos,
         })
@@ -167,6 +169,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
         "perto": lambda r: (r["distance_km"] if r["distance_km"] is not None else 1e9),
         "nota": lambda r: (-(r["rating"] or 0), -r["reviewCount"]),
         "curtidos": lambda r: -r["likes"],
+        "procurados": lambda r: -r["searches"],
         "preco": lambda r: r["price"],
     }
     chave = chaves.get(ordem) or (lambda r: (
