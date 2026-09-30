@@ -8,7 +8,7 @@ import os
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins=os.environ.get("CORS_ORIGINS", "*").split(","))
     env = os.environ.get("FLASK_ENV", "development")
     app.config.from_object(config_dict[env])
 
