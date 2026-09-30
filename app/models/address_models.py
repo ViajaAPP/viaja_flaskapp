@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class AddressCreateModel(BaseModel):
-    cep: str
+    cep: Optional[str] = None
     uf: str
     city: str
     neighborhood: str
     street: str
-    number: str
+    number: str = "S/N"
     lat: Optional[float] = None
     lon: Optional[float] = None
     ibge_code: Optional[int] = None

@@ -26,7 +26,9 @@ def find_users(user_ids):
     return {user['user_id']: user for user in response.data or []}
 
 def find_or_create_address(address):
-    address_response = supabase.table("address").select("id").eq("cep", address.cep).eq("neighborhood", address.neighborhood).eq("street", address.street).eq("number", address.number).execute()
+    query = supabase.table("address").select("id").eq("neighborhood", address.neighborhood).eq("street", address.street).eq("number", address.number)
+    query = query.eq("cep", address.cep) if address.cep else query.is_("cep", "null").eq("city", address.city)
+    address_response = query.execute()
     if address_response.data:
         address_id = address_response.data[0]['id']
         localizacao = address.model_dump(include={"lat", "lon", "ibge_code"}, exclude_none=True)

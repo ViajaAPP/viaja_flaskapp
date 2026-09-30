@@ -10,14 +10,18 @@ from app.utils.auth import token_required, role_required, is_tour_owner, can_mod
 tour_bp = Blueprint('tour', __name__)
 
 ADDRESS_FIELDS = ['cep', 'uf', 'city', 'neighborhood', 'street', 'number']
-TOUR_REQUIRED_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo'] + ADDRESS_FIELDS
+ADDRESS_REQUIRED_FIELDS = ['uf', 'city', 'neighborhood', 'street']
+TOUR_REQUIRED_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo'] + ADDRESS_REQUIRED_FIELDS
 TOUR_EDITABLE_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo', 'photo_credit']
 
 def _missing_fields(data, fields):
     return [field for field in fields if not data.get(field)]
 
 def _address_from(data):
-    campos = {field: data.get(field) for field in ADDRESS_FIELDS}
+    campos = {field: data.get(field) for field in ADDRESS_REQUIRED_FIELDS}
+    cep = ''.join(c for c in str(data.get('cep') or '') if c.isdigit())
+    campos['cep'] = cep if len(cep) == 8 else None
+    campos['number'] = str(data.get('number') or '').strip() or 'S/N'
     for field in ('lat', 'lon', 'ibge_code'):
         if data.get(field) not in (None, ''):
             campos[field] = data.get(field)
@@ -267,7 +271,7 @@ def update_tour(current_user, tour_id):
     try:
         changes = {field: data[field] for field in TOUR_EDITABLE_FIELDS if field in data}
         if any(field in data for field in ADDRESS_FIELDS):
-            campos_faltando = _missing_fields(data, ADDRESS_FIELDS)
+            campos_faltando = _missing_fields(data, ADDRESS_REQUIRED_FIELDS)
             if campos_faltando:
                 return jsonify({"error": f"Campos obrigatórios faltando! Campos: {', '.join(campos_faltando)}"}), 400
             changes['address_id'] = tour_service.find_or_create_address(_address_from(data))
