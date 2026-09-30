@@ -6,7 +6,7 @@ socket_bp = Blueprint('socket', __name__)
 
 def _get_websocket_url():
     """Lê a URL do WebSocket do arquivo .env."""
-    websocket_url = None
+    websocket_url = os.environ.get("PUBLIC_URL_WS")
     env_path = ".env"
     if os.path.exists(env_path):
         with open(env_path, "r") as f:
