@@ -33,6 +33,7 @@ def create_app():
     from .routes.busca import busca_bp
     from .routes.avisos import avisos_bp
     from .routes.painel import painel_bp
+    from .routes.eventos import eventos_bp
 
     app.register_blueprint(socket_bp, url_prefix='/ws')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -49,6 +50,7 @@ def create_app():
     app.register_blueprint(busca_bp, url_prefix='/busca')
     app.register_blueprint(avisos_bp, url_prefix='/avisos')
     app.register_blueprint(painel_bp, url_prefix='/painel')
+    app.register_blueprint(eventos_bp, url_prefix='/eventos')
     sock.init_app(app)
 
     return app
