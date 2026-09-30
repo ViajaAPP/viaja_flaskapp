@@ -50,7 +50,8 @@ def passeios(current_user):
             nota_min=_numero('nota_min'),
             ordem=request.args.get('ordem') or 'relevancia',
         )
-        return jsonify(resultados), 200
+        limite = _numero('limite')
+        return jsonify(resultados[:int(limite)] if limite else resultados), 200
     except Exception as e:
         current_app.logger.error(f"Erro na busca de passeios: {e}")
         return jsonify({"error": "Não conseguimos buscar os passeios agora. Tente de novo."}), 500
