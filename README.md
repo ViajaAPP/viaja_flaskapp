@@ -124,8 +124,15 @@ O `pull` escreve o `.env` com:
 | `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | usadas para aplicar migrations no banco de produção |
 | `CIDADESBR_API_URL` | endereço da CidadesBR-API. Sem ela, o back usa `https://cidadesbr-api.onrender.com` |
 | `CIDADESBR_ADMIN_API_KEY` | chave das rotas `/admin` da CidadesBR-API. O back não usa; serve para consultar o uso da API |
+| `CONTAS_TESTE_SENHA` | senha das contas de teste na produção (veja abaixo). O back não usa |
 
 O `.env` nunca vai para o git. Para voltar ao banco local depois, rode `bash scripts/secrets.sh local`.
+
+### Contas de teste na produção
+A produção tem as mesmas contas de teste do modo local: `guia@viaja.local`, `viajante@viaja.local` e `admin@viaja.local`. A senha **não** é `viaja123`: é a `CONTAS_TESTE_SENHA` que o `pull` escreve no `.env`. Para ver:
+```bash
+grep CONTAS_TESTE_SENHA .env
+```
 
 ### Trocar ou acrescentar uma chave
 Só quem tem permissão de edição no arquivo do Drive consegue:
