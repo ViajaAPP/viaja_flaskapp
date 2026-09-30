@@ -14,6 +14,8 @@ class TourCreateModel(BaseModel):
     photo_credit: Optional[str] = None
     address_id: int
     published: bool = False
+    instant_booking: bool = False
+    min_participants: int = 1
 
 class TourModel(TourCreateModel):
     id: int
@@ -28,6 +30,8 @@ class TourUpdateModel(BaseModel):
     photo: Optional[str] = None
     photo_credit: Optional[str] = None
     address_id: Optional[int] = None
+    instant_booking: Optional[bool] = None
+    min_participants: Optional[int] = None
 
 class TourInstanceCreateModel(BaseModel):
     tour_id: int

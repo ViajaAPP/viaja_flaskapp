@@ -53,15 +53,24 @@ def create_tour_request(current_user, tour_instance_id):
     tour_request = TourRequestCreateModel(
         requester_id=current_user['user_id'],
         tour_instance_id=tour_instance_id,
-        message=data.get('message', '')
+        message=data.get('message', ''),
+        status=RequestStatus.ACCEPTED if tour.get('instant_booking') else RequestStatus.PENDING
     )
     try:
         response = supabase.table("tour_request").insert(tour_request.dict()).execute()
         request_data = response.data
         if not request_data:
             return jsonify({"error": "Erro ao criar solicitação para tour"}), 500
-        aviso_service.pedido_novo(tour, tour_instance, current_user['user_id'])
-        return jsonify({"message": "Solicitação para tour criada com sucesso!", "request_id": request_data[0]['id']}), 201
+        if tour.get('instant_booking'):
+            tour_service.close_registration_if_full(tour_instance)
+            aviso_service.reserva_instantanea(tour, tour_instance, current_user['user_id'])
+        else:
+            aviso_service.pedido_novo(tour, tour_instance, current_user['user_id'])
+        return jsonify({
+            "message": "Solicitação para tour criada com sucesso!",
+            "request_id": request_data[0]['id'],
+            "status": request_data[0]['status'],
+        }), 201
     except Exception as e:
         current_app.logger.error(f"Exceção ao criar solicitação para tour: {str(e)}")
         return jsonify({"error": "Erro ao criar solicitação para tour"}), 500

@@ -43,6 +43,15 @@ def pedido_novo(tour, instance, requester_id):
           f"{tour['title']}, {_data(instance['start_time'])}. Responda para a pessoa saber se tem vaga.",
           "/painel")
 
+def reserva_instantanea(tour, instance, requester_id):
+    criar([tour['created_by_id']], "reserva_nova",
+          f"{_primeiro_nome(requester_id)} reservou uma vaga",
+          f"{tour['title']}, {_data(instance['start_time'])}. A vaga já está confirmada.",
+          "/painel?aba=agenda")
+    criar([requester_id], "pedido_aceito", "Sua vaga está confirmada!",
+          f"{tour['title']}, {_data(instance['start_time'])}. O chat do grupo já está aberto.",
+          f"/passeio/{tour['id']}")
+
 def pedido_respondido(tour, instance, requester_id, aceito: bool):
     if aceito:
         criar([requester_id], "pedido_aceito", "Sua vaga está confirmada!",

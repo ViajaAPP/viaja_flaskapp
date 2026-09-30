@@ -12,7 +12,7 @@ tour_bp = Blueprint('tour', __name__)
 ADDRESS_FIELDS = ['cep', 'uf', 'city', 'neighborhood', 'street', 'number']
 ADDRESS_REQUIRED_FIELDS = ['uf', 'city', 'neighborhood', 'street']
 TOUR_REQUIRED_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo'] + ADDRESS_REQUIRED_FIELDS
-TOUR_EDITABLE_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo', 'photo_credit']
+TOUR_EDITABLE_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo', 'photo_credit', 'instant_booking', 'min_participants']
 
 def _missing_fields(data, fields):
     return [field for field in fields if not data.get(field)]
@@ -135,6 +135,8 @@ def create_tour(current_user):
             meeting_point=data.get('meeting_point'),
             photo=data.get('photo'),
             photo_credit=data.get('photo_credit'),
+            instant_booking=bool(data.get('instant_booking')),
+            min_participants=max(int(data.get('min_participants') or 1), 1),
             address_id=address_id
         )
     except ValidationError as e:

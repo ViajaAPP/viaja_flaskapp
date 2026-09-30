@@ -14,6 +14,8 @@ class RequestStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
     DENIED = "DENIED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
     
 class UserRole(str, Enum):
     TOURIST = "TOURIST"
