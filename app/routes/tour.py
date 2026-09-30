@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from app.services.supabase_service import supabase
-from app.services import tour_service, cidades_service
+from app.services import tour_service, cidades_service, foto_service
 from app.models.enums import UserRole, RegistrationStatus, RequestStatus
 from app.models.tour_models import TourCreateModel, TourUpdateModel, TourInstanceCreateModel, TourInstanceUpdateModel
 from app.models.address_models import AddressCreateModel
@@ -197,6 +197,21 @@ def list_nearby_tours(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao listar tours por perto: {e}")
         return jsonify({"error": "Erro ao listar tours por perto"}), 500
+
+@tour_bp.route('/photo', methods=['POST'])
+@token_required
+@role_required(UserRole.GUIDE)
+def upload_tour_photo(current_user):
+    arquivo = request.files.get('photo')
+    if not arquivo:
+        return jsonify({"error": "Escolha uma foto"}), 400
+    try:
+        return jsonify({"photo": foto_service.enviar_capa_de_passeio(arquivo, current_user['user_id'])}), 200
+    except foto_service.FotoInvalida as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Erro ao enviar capa do passeio: {e}")
+        return jsonify({"error": "Erro ao enviar capa do passeio"}), 500
 
 @tour_bp.route('/<int:tour_id>', methods=['GET'])
 @token_required

@@ -6,6 +6,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import supabase
+from app.services import foto_service
 from app.models.enums import UserRole
 
 cnaes_turismo = [7911200, 7912100]
@@ -54,9 +55,11 @@ def add_user():
         500:
             description: Erro ao salvar usuário no banco de dados
     """
-    data = request.get_json()
+    foto = request.files.get('photo')
+    data = request.form.to_dict() if request.content_type and request.content_type.startswith('multipart/') else request.get_json(silent=True)
     if not data:
         return jsonify({"error": "Body ausente"}), 400
+    data.setdefault('photo', '')
     
     # fazer hash da password
     password = data.get('password')
@@ -96,7 +99,14 @@ def add_user():
         user_data = response.data
         if not user_data:
             return jsonify({"error": "Erro ao salvar usuário no banco de dados"}), 500
-        return jsonify({"message": "Usuário criado com sucesso", "user_id": user_data[0]['user_id']}), 201
+        user_id = user_data[0]['user_id']
+        if foto:
+            try:
+                url = foto_service.enviar_foto_de_perfil(foto, user_id)
+                supabase.table("user").update({"photo": url}).eq("user_id", user_id).execute()
+            except Exception as e:
+                current_app.logger.warning(f"Conta criada sem foto: {e}")
+        return jsonify({"message": "Usuário criado com sucesso", "user_id": user_id}), 201
     except Exception as e:
         current_app.logger.exception(e)
         return jsonify({"error": "Erro ao salvar usuário"}), 500
