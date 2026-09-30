@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from app.services.supabase_service import supabase
-from app.services import tour_service, cidades_service, foto_service
+from app.services import tour_service, cidades_service, foto_service, review_service
 from app.models.enums import UserRole, RegistrationStatus, RequestStatus
 from app.models.tour_models import TourCreateModel, TourUpdateModel, TourInstanceCreateModel, TourInstanceUpdateModel
 from app.models.address_models import AddressCreateModel
@@ -11,13 +11,17 @@ tour_bp = Blueprint('tour', __name__)
 
 ADDRESS_FIELDS = ['cep', 'uf', 'city', 'neighborhood', 'street', 'number']
 TOUR_REQUIRED_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo'] + ADDRESS_FIELDS
-TOUR_EDITABLE_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo']
+TOUR_EDITABLE_FIELDS = ['title', 'description', 'price', 'estimated_duration_minutes', 'meeting_point', 'photo', 'photo_credit']
 
 def _missing_fields(data, fields):
     return [field for field in fields if not data.get(field)]
 
 def _address_from(data):
-    return AddressCreateModel(**{field: data.get(field) for field in ADDRESS_FIELDS})
+    campos = {field: data.get(field) for field in ADDRESS_FIELDS}
+    for field in ('lat', 'lon', 'ibge_code'):
+        if data.get(field) not in (None, ''):
+            campos[field] = data.get(field)
+    return AddressCreateModel(**campos)
 
 def _serialize_instance(instance, request_status_by_instance):
     return {
@@ -126,6 +130,7 @@ def create_tour(current_user):
             estimated_duration_minutes=data.get('estimated_duration_minutes'),
             meeting_point=data.get('meeting_point'),
             photo=data.get('photo'),
+            photo_credit=data.get('photo_credit'),
             address_id=address_id
         )
     except ValidationError as e:
@@ -168,11 +173,13 @@ def list_nearby_tours(current_user):
     try:
         tours = tour_service.list_published_tours_with_address()
         guias = tour_service.find_users({tour['created_by_id'] for tour in tours})
+        avaliacoes = review_service.summary_by_tour()
         favorite_tour_ids = tour_service.list_favorite_tour_ids(current_user['user_id'])
         proximos = []
         for tour in tours:
             endereco = tour.get('address') or {}
-            destino = cidades_service.coordenadas_da_cidade(endereco.get('city'), endereco.get('uf'))
+            destino = (endereco['lat'], endereco['lon']) if endereco.get('lat') is not None and endereco.get('lon') is not None \
+                else cidades_service.coordenadas_da_cidade(endereco.get('city'), endereco.get('uf'))
             if not destino:
                 continue
             km = cidades_service.distancia_km(origem, destino)
@@ -183,8 +190,8 @@ def list_nearby_tours(current_user):
                 "guideFoto": guia.get('photo'),
                 "guide": f"{guia.get('first_name', '')} {guia.get('last_name', '')}".strip(),
                 "imageUrl": tour['photo'],
-                "rating": 5,
-                "reviewCount": 0,
+                "rating": (avaliacoes.get(tour['id']) or {}).get('average'),
+                "reviewCount": (avaliacoes.get(tour['id']) or {}).get('count', 0),
                 "tag": _texto_da_distancia(km),
                 "tagType": "nearby",
                 "favorite": tour['id'] in favorite_tour_ids,
@@ -229,6 +236,10 @@ def get_tour(current_user, tour_id):
         return jsonify({
             **tour,
             "address": tour_service.find_address(tour['address_id']),
+            "photos": tour_service.list_tour_photos(tour_id),
+            "reviews": review_service.list_reviews(tour_id),
+            "rating": review_service.summary_by_tour([tour_id]).get(tour_id, {"average": None, "count": 0}),
+            "review_instance_id": review_service.instance_to_review(tour_id, current_user['user_id']),
             "guide": guide,
             "instances": [_serialize_instance(instance, request_status_by_instance) for instance in instances],
             "is_owner": is_tour_owner(tour, current_user),
@@ -503,3 +514,67 @@ def get_tour_instance(current_user, tour_id, instance_id):
         "current_capacity": tour_service.count_accepted_requests(instance_id),
         "chat_id": chat_id
     }), 200
+
+@tour_bp.route('/<int:tour_id>/photos', methods=['POST'])
+@token_required
+@role_required(UserRole.GUIDE)
+def add_tour_photo(current_user, tour_id):
+    tour = tour_service.find_tour(tour_id)
+    if not tour:
+        return jsonify({"error": "Passeio não encontrado"}), 404
+    if not is_tour_owner(tour, current_user):
+        return jsonify({"error": "Acesso negado"}), 403
+    if len(tour_service.list_tour_photos(tour_id)) >= tour_service.LIMITE_DE_FOTOS:
+        return jsonify({"error": f"Cada passeio pode ter até {tour_service.LIMITE_DE_FOTOS} fotos. Tire uma para colocar outra."}), 400
+    arquivo = request.files.get('photo')
+    if not arquivo:
+        return jsonify({"error": "Escolha uma foto"}), 400
+    try:
+        url = foto_service.enviar_capa_de_passeio(arquivo, current_user['user_id'])
+        foto = tour_service.add_tour_photo(tour_id, url, (request.form.get('credit') or '').strip() or None)
+        return jsonify(foto), 201
+    except foto_service.FotoInvalida as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Erro ao enviar foto do passeio: {e}")
+        return jsonify({"error": "Não conseguimos enviar a foto. Tente de novo."}), 500
+
+@tour_bp.route('/<int:tour_id>/photos/<int:photo_id>', methods=['DELETE'])
+@token_required
+@role_required(UserRole.GUIDE)
+def delete_tour_photo(current_user, tour_id, photo_id):
+    tour = tour_service.find_tour(tour_id)
+    if not tour:
+        return jsonify({"error": "Passeio não encontrado"}), 404
+    if not is_tour_owner(tour, current_user):
+        return jsonify({"error": "Acesso negado"}), 403
+    try:
+        url = tour_service.delete_tour_photo(tour_id, photo_id)
+        if url is None:
+            return jsonify({"error": "Foto não encontrada"}), 404
+        foto_service.apagar_foto(url)
+        return jsonify({"message": "Foto removida"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao remover foto do passeio: {e}")
+        return jsonify({"error": "Não conseguimos remover a foto. Tente de novo."}), 500
+
+@tour_bp.route('/<int:tour_id>/reviews', methods=['POST'])
+@token_required
+def create_tour_review(current_user, tour_id):
+    data = request.get_json(silent=True) or {}
+    try:
+        nota = int(data.get('rating'))
+    except (TypeError, ValueError):
+        nota = 0
+    if nota < 1 or nota > 5:
+        return jsonify({"error": "Escolha uma nota de 1 a 5."}), 400
+    comentario = (data.get('comment') or '').strip()[:1000]
+    try:
+        instance_id = review_service.instance_to_review(tour_id, current_user['user_id'])
+        if not instance_id:
+            return jsonify({"error": "Só quem foi no passeio pode avaliar, e uma vez por data."}), 403
+        review_service.create_review(tour_id, instance_id, current_user['user_id'], nota, comentario)
+        return jsonify({"message": "Obrigado pela avaliação!"}), 201
+    except Exception as e:
+        current_app.logger.error(f"Erro ao avaliar passeio: {e}")
+        return jsonify({"error": "Não conseguimos salvar sua avaliação. Tente de novo."}), 500

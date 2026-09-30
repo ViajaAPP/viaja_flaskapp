@@ -11,6 +11,7 @@ class TourCreateModel(BaseModel):
     estimated_duration_minutes: int
     meeting_point: str
     photo: str
+    photo_credit: Optional[str] = None
     address_id: int
     published: bool = False
 
@@ -25,6 +26,7 @@ class TourUpdateModel(BaseModel):
     estimated_duration_minutes: Optional[int] = None
     meeting_point: Optional[str] = None
     photo: Optional[str] = None
+    photo_credit: Optional[str] = None
     address_id: Optional[int] = None
 
 class TourInstanceCreateModel(BaseModel):

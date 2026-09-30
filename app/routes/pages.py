@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
 from app.utils.auth import token_required
-from app.services import tour_service
+from app.services import tour_service, review_service
 from app.routes.chat import _get_last_messages
 from app.routes.socket import _get_websocket_url
 from datetime import timedelta, datetime, timezone
@@ -53,6 +53,7 @@ def home(current_user):
         published_tour_ids = tour_service.list_published_tour_ids()
         favorite_tour_ids = tour_service.list_favorite_tour_ids(current_user['user_id'])
         likes_by_tour = tour_service.count_favorites_by_tour()
+        ratings_by_tour = review_service.summary_by_tour()
         requests_by_tour = tour_service.count_requests_by_tour()
         if tours_response.data:
             for tour in [tour for tour in tours_response.data if tour['id'] in published_tour_ids]:
@@ -62,6 +63,8 @@ def home(current_user):
                     "guideFoto": tour['guidephoto'],
                     "guide": tour['guide'],
                     "imageUrl": tour['photo'],
+                    "rating": (ratings_by_tour.get(tour['id']) or {}).get('average'),
+                    "reviewCount": (ratings_by_tour.get(tour['id']) or {}).get('count', 0),
                     "likes": likes_by_tour.get(tour['id'], 0),
                     "searches": requests_by_tour.get(tour['id'], 0),
                     "travelers": tour['qt_turistas'],

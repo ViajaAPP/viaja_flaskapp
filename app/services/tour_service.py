@@ -28,8 +28,12 @@ def find_users(user_ids):
 def find_or_create_address(address):
     address_response = supabase.table("address").select("id").eq("cep", address.cep).eq("neighborhood", address.neighborhood).eq("street", address.street).eq("number", address.number).execute()
     if address_response.data:
-        return address_response.data[0]['id']
-    address_insert_response = supabase.table("address").insert(address.model_dump()).execute()
+        address_id = address_response.data[0]['id']
+        localizacao = address.model_dump(include={"lat", "lon", "ibge_code"}, exclude_none=True)
+        if localizacao:
+            supabase.table("address").update(localizacao).eq("id", address_id).execute()
+        return address_id
+    address_insert_response = supabase.table("address").insert(address.model_dump(exclude_none=True)).execute()
     return address_insert_response.data[0]['id'] if address_insert_response.data else None
 
 def list_tours(created_by_id=None):
@@ -43,7 +47,7 @@ def list_tour_instances(tour_id):
     return response.data or []
 
 def list_published_tours_with_address():
-    response = supabase.table("tour").select("id, title, photo, created_by_id, address(city, uf)").eq("published", True).execute()
+    response = supabase.table("tour").select("id, title, photo, created_by_id, address(city, uf, lat, lon)").eq("published", True).execute()
     return response.data or []
 
 def list_published_tour_ids():
@@ -85,3 +89,26 @@ def count_requests_by_tour():
     tour_by_instance = {instance['id']: instance['tour_id'] for instance in instances}
     requests = supabase.table("tour_request").select("tour_instance_id").execute().data or []
     return Counter(tour_by_instance.get(request['tour_instance_id']) for request in requests)
+
+LIMITE_DE_FOTOS = 10
+
+def list_tour_photos(tour_id):
+    response = supabase.table("tour_photo").select("id, url, credit, position").eq("tour_id", tour_id).order("position").order("id").execute()
+    return response.data or []
+
+def add_tour_photo(tour_id, url, credit=None):
+    atuais = list_tour_photos(tour_id)
+    response = supabase.table("tour_photo").insert({
+        "tour_id": tour_id,
+        "url": url,
+        "credit": credit,
+        "position": (atuais[-1]['position'] + 1) if atuais else 0,
+    }).execute()
+    return response.data[0] if response.data else None
+
+def delete_tour_photo(tour_id, photo_id):
+    response = supabase.table("tour_photo").select("url").eq("id", photo_id).eq("tour_id", tour_id).execute()
+    if not response.data:
+        return None
+    supabase.table("tour_photo").delete().eq("id", photo_id).eq("tour_id", tour_id).execute()
+    return response.data[0]['url']
