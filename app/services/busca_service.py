@@ -13,7 +13,7 @@ def _sem_acento(texto: str) -> str:
 
 def _passeios_publicados():
     return supabase.table("tour") \
-        .select("id, title, description, price, photo, created_by_id, address(city, uf, lat, lon), tour_instance(start_time, status, registration)") \
+        .select("id, title, description, price, photo, created_by_id, address(city, uf, lat, lon), tour_instance(id, start_time, status, registration, max_capacity)") \
         .eq("published", True).execute().data or []
 
 def _ponto_do_passeio(passeio, coordenadas_por_cidade):
@@ -25,14 +25,23 @@ def _ponto_do_passeio(passeio, coordenadas_por_cidade):
         coordenadas_por_cidade[chave] = cidades_service.coordenadas_da_cidade(*chave)
     return coordenadas_por_cidade[chave]
 
-def _proximas_saidas(passeio):
+def _proximas_instancias(passeio):
     agora = datetime.now(timezone.utc)
-    saidas = []
-    for instancia in passeio.get("tour_instance") or []:
-        inicio = datetime.fromisoformat(instancia["start_time"].replace("Z", "+00:00"))
-        if instancia["status"] == "SCHEDULED" and inicio > agora:
-            saidas.append(inicio)
-    return sorted(saidas)
+    futuras = [
+        (datetime.fromisoformat(i["start_time"].replace("Z", "+00:00")), i)
+        for i in passeio.get("tour_instance") or [] if i["status"] == "SCHEDULED"
+    ]
+    return sorted([(inicio, i) for inicio, i in futuras if inicio > agora], key=lambda par: par[0])
+
+def _proximas_saidas(passeio):
+    return [inicio for inicio, _ in _proximas_instancias(passeio)]
+
+def _confirmados_por_instancia(passeios):
+    ids = [i["id"] for p in passeios for _, i in _proximas_instancias(p)[:1]]
+    if not ids:
+        return {}
+    aceitos = supabase.table("tour_request").select("tour_instance_id").in_("tour_instance_id", ids).eq("status", "ACCEPTED").execute().data or []
+    return Counter(a["tour_instance_id"] for a in aceitos)
 
 def _janela(quando: Optional[str]):
     hoje = datetime.now(FUSO).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -46,6 +55,14 @@ def _janela(quando: Optional[str]):
     if quando == "7-dias":
         return hoje, hoje + timedelta(days=7)
     return None
+
+def _vagas_livres(proximas, confirmados):
+    if not proximas:
+        return None
+    instancia = proximas[0][1]
+    if instancia["registration"] == "FULL":
+        return 0
+    return max(instancia["max_capacity"] - confirmados.get(instancia["id"], 0), 0)
 
 def sugestoes(texto: str, perto: Optional[tuple[float, float]] = None) -> dict:
     alvo = _sem_acento(texto)
@@ -116,6 +133,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
     pedidos = tour_service.count_requests_by_tour()
     avaliacoes = review_service.summary_by_tour()
     janela = _janela(quando)
+    confirmados = _confirmados_por_instancia(passeios)
     alvo = _sem_acento(texto)
     raio = raio_km or RAIO_PADRAO_KM
     coordenadas_por_cidade = {}
@@ -162,6 +180,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
             "likes": curtidas.get(passeio["id"], 0),
             "searches": pedidos.get(passeio["id"], 0),
             "nextDate": saidas[0].isoformat() if saidas else None,
+            "spotsLeft": _vagas_livres(_proximas_instancias(passeio), confirmados),
             "favorite": passeio["id"] in favoritos,
         })
 
