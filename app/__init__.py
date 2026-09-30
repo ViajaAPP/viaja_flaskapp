@@ -1,10 +1,13 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from config import config_dict
 from .services.supabase_service import init_supabase
 from .services.message_queue_service import init_message_worker
 from .services.swagger import init_swagger
 import os
+from .services import cache_service
+
+PREFIXOS_QUE_MUDAM_PASSEIOS = ('/tour', '/request', '/favorite', '/users', '/eventos')
 
 def create_app():
     app = Flask(__name__)
@@ -52,5 +55,11 @@ def create_app():
     app.register_blueprint(painel_bp, url_prefix='/painel')
     app.register_blueprint(eventos_bp, url_prefix='/eventos')
     sock.init_app(app)
+
+    @app.after_request
+    def limpar_cache_depois_de_escrever(resposta):
+        if request.method != 'GET' and resposta.status_code < 400 and request.path.startswith(PREFIXOS_QUE_MUDAM_PASSEIOS):
+            cache_service.invalidar("passeios")
+        return resposta
 
     return app

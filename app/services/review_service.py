@@ -1,13 +1,17 @@
 from datetime import datetime, timezone
 from app.services.supabase_service import supabase
+from app.services.cache_service import lembrar
 from app.models.enums import RequestStatus, TourStatus
 
+@lembrar("passeios")
+def _todas_as_notas():
+    return supabase.table("tour_review").select("tour_id, rating").execute().data or []
+
 def summary_by_tour(tour_ids=None):
-    query = supabase.table("tour_review").select("tour_id, rating")
-    if tour_ids is not None:
-        query = query.in_("tour_id", list(tour_ids))
+    ids = set(tour_ids) if tour_ids is not None else None
+    notas = [n for n in _todas_as_notas() if ids is None or n["tour_id"] in ids]
     totais = {}
-    for review in query.execute().data or []:
+    for review in notas:
         soma, quantidade = totais.get(review['tour_id'], (0, 0))
         totais[review['tour_id']] = (soma + review['rating'], quantidade + 1)
     return {tour_id: {"average": round(soma / quantidade, 1), "count": quantidade} for tour_id, (soma, quantidade) in totais.items()}

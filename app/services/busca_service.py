@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from app.services.supabase_service import supabase
 from app.services import cidades_service, local_service, review_service, tour_service
+from app.services.cache_service import lembrar
 
 FUSO = timezone(timedelta(hours=-3))
 RAIO_PADRAO_KM = 50
@@ -12,6 +13,7 @@ RAIO_PADRAO_KM = 50
 def _sem_acento(texto: str) -> str:
     return unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode().lower()
 
+@lembrar("passeios")
 def _passeios_publicados():
     return supabase.table("tour") \
         .select("id, title, description, price, photo, created_by_id, address(city, uf, lat, lon), tour_instance(id, start_time, status, registration, max_capacity)") \
@@ -142,6 +144,7 @@ def sugestoes(texto: str, perto: Optional[tuple[float, float]] = None) -> dict:
 
     return {"cidades": cidades, "passeios": passeios[:5], "lugares": lugares}
 
+@lembrar("passeios", segundos=300)
 def destinos_em_alta(limite: int = 8) -> list[dict]:
     contagem = Counter()
     for passeio in _passeios_publicados():

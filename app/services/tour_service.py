@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import datetime, timezone
 from app.services.supabase_service import supabase
+from app.services.cache_service import lembrar
 from app.models.enums import RequestStatus, RegistrationStatus, TourStatus
 
 USER_PUBLIC_FIELDS = "user_id, first_name, last_name, photo"
@@ -82,15 +83,23 @@ def list_favorite_tour_ids(user_id):
     response = supabase.table("favorite_tour").select("tour_id").eq("user_id", user_id).execute()
     return {favorite['tour_id'] for favorite in response.data or []}
 
-def count_favorites_by_tour():
+@lembrar("passeios")
+def _pares_de_favoritos():
     response = supabase.table("favorite_tour").select("tour_id").execute()
-    return Counter(favorite['tour_id'] for favorite in response.data or [])
+    return list(Counter(favorite['tour_id'] for favorite in response.data or []).items())
 
-def count_requests_by_tour():
+@lembrar("passeios")
+def _pares_de_pedidos():
     instances = supabase.table("tour_instance").select("id, tour_id").execute().data or []
     tour_by_instance = {instance['id']: instance['tour_id'] for instance in instances}
     requests = supabase.table("tour_request").select("tour_instance_id").execute().data or []
-    return Counter(tour_by_instance.get(request['tour_instance_id']) for request in requests)
+    return list(Counter(tour_by_instance.get(request['tour_instance_id']) for request in requests).items())
+
+def count_favorites_by_tour():
+    return Counter(dict(_pares_de_favoritos()))
+
+def count_requests_by_tour():
+    return Counter(dict(_pares_de_pedidos()))
 
 LIMITE_DE_FOTOS = 10
 
