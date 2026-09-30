@@ -10,6 +10,7 @@ class Config:
     NGROK_AUTHTOKEN = os.getenv('NGROK_AUTHTOKEN')
     CIDADESBR_API_URL = os.getenv('CIDADESBR_API_URL', 'https://cidadesbr-api.onrender.com')
     APP_URL = os.getenv('APP_URL', 'http://localhost:4200')
+    PHOTON_URL = os.getenv('PHOTON_URL', 'https://photon.komoot.io')
     SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
     SMTP_PORT = os.getenv('SMTP_PORT', '587')
     SMTP_USER = os.getenv('SMTP_USER')

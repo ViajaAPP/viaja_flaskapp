@@ -29,6 +29,7 @@ def create_app():
     from .routes.cidades import cidades_bp
     from .routes.favorite import favorite_bp
     from .routes.user import user_bp
+    from .routes.locais import locais_bp
 
     app.register_blueprint(socket_bp, url_prefix='/ws')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -41,6 +42,7 @@ def create_app():
     app.register_blueprint(cidades_bp, url_prefix='/cidades')
     app.register_blueprint(favorite_bp, url_prefix='/favorite')
     app.register_blueprint(user_bp, url_prefix='/users')
+    app.register_blueprint(locais_bp, url_prefix='/locais')
     sock.init_app(app)
 
     return app
