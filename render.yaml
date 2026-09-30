@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: viaja-api
+    runtime: python
+    plan: free
+    branch: staging
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_app()" --worker-class gthread --workers 1 --threads 50 --bind 0.0.0.0:$PORT
+    healthCheckPath: /health/
+    domains:
+      - api.viaja-app.com.br
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.6
+      - key: FLASK_ENV
+        value: production
+      - key: PUBLIC_URL_WS
+        value: wss://api.viaja-app.com.br
+      - key: CORS_ORIGINS
+        value: https://viaja-app.com.br,https://www.viaja-app.com.br
+      - key: CIDADESBR_API_URL
+        value: https://cidadesbr-api.onrender.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: AUTH_CRYPT_KEY
+        sync: false
