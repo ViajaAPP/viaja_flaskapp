@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime, timezone
 from app.services.supabase_service import supabase
 from app.models.enums import RequestStatus, RegistrationStatus, TourStatus
@@ -74,3 +75,13 @@ def close_registration_if_full(instance):
 def list_favorite_tour_ids(user_id):
     response = supabase.table("favorite_tour").select("tour_id").eq("user_id", user_id).execute()
     return {favorite['tour_id'] for favorite in response.data or []}
+
+def count_favorites_by_tour():
+    response = supabase.table("favorite_tour").select("tour_id").execute()
+    return Counter(favorite['tour_id'] for favorite in response.data or [])
+
+def count_requests_by_tour():
+    instances = supabase.table("tour_instance").select("id, tour_id").execute().data or []
+    tour_by_instance = {instance['id']: instance['tour_id'] for instance in instances}
+    requests = supabase.table("tour_request").select("tour_instance_id").execute().data or []
+    return Counter(tour_by_instance.get(request['tour_instance_id']) for request in requests)
