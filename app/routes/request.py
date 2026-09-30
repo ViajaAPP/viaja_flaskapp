@@ -11,7 +11,7 @@ request_bp = Blueprint('request', __name__)
 
 @request_bp.route('/instances/<int:tour_instance_id>', methods=['POST'])
 @token_required
-@role_required(UserRole.TOURIST)
+@role_required(UserRole.TOURIST, UserRole.GUIDE, UserRole.EVENT_PROMOTER)
 def create_tour_request(current_user, tour_instance_id):
     """
     Criar um novo tour request
@@ -34,6 +34,8 @@ def create_tour_request(current_user, tour_instance_id):
     tour = tour_service.find_tour(tour_instance['tour_id'])
     if not tour or not tour['published']:
         return jsonify({"error": "Tour não encontrado"}), 404
+    if tour['created_by_id'] == current_user['user_id']:
+        return jsonify({"error": "Esse passeio é seu, então você já está nele."}), 409
 
     if not tour_service.is_instance_open_for_requests(tour_instance):
         return jsonify({"error": "O tour não está disponível para solicitações"}), 409
@@ -77,7 +79,7 @@ def create_tour_request(current_user, tour_instance_id):
     
 @request_bp.route('/', methods=['GET'])
 @token_required
-@role_required(UserRole.TOURIST)
+@role_required(UserRole.TOURIST, UserRole.GUIDE, UserRole.EVENT_PROMOTER)
 def list_user_requests(current_user):
     """
     Listar solicitações do usuário
