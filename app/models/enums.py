@@ -3,7 +3,7 @@ from enum import Enum
 class TourStatus(str, Enum):
     SCHEDULED = "SCHEDULED"
     DONE = "DONE"
-    CANCELED = "CANCELED"
+    CANCELED = "CANCELLED"
 
 class RegistrationStatus(str, Enum):
     OPEN = "OPEN"
