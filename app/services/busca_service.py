@@ -1,3 +1,4 @@
+import math
 import unicodedata
 from collections import Counter
 from datetime import datetime, timedelta, timezone
@@ -63,6 +64,39 @@ def _vagas_livres(proximas, confirmados):
     if instancia["registration"] == "FULL":
         return 0
     return max(instancia["max_capacity"] - confirmados.get(instancia["id"], 0), 0)
+
+def _historico(user_id):
+    favoritos = tour_service.list_favorite_tour_ids(user_id)
+    pedidos = supabase.table("tour_request").select("status, tour_instance(tour_id)").eq("requester_id", user_id).execute().data or []
+    reservados = {(p.get("tour_instance") or {}).get("tour_id") for p in pedidos if p["status"] in ("PENDING", "ACCEPTED")}
+    pedidos_ids = {(p.get("tour_instance") or {}).get("tour_id") for p in pedidos}
+    avaliados = {r["tour_id"] for r in supabase.table("tour_review").select("tour_id").eq("user_id", user_id).execute().data or []}
+    return favoritos | pedidos_ids | avaliados, reservados - {None}
+
+def _nota_ajustada(media, quantidade, media_geral=4.2, peso=3):
+    return ((media or 0) * quantidade + media_geral * peso) / (quantidade + peso)
+
+def _ordenar_para_voce(user_id, resultados, centro):
+    interesses, reservados = _historico(user_id)
+    do_interesse = [r for r in resultados if r["id"] in interesses]
+    cidades = Counter((r["city"], r["uf"]) for r in do_interesse)
+    maior_cidade = max(cidades.values()) if cidades else 1
+    precos = [r["price"] for r in do_interesse]
+    preco_medio = sum(precos) / len(precos) if precos else None
+    maior_popularidade = max((r["likes"] + r["searches"] for r in resultados), default=0) or 1
+    agora = datetime.now(timezone.utc)
+
+    def pontos(r):
+        qualidade = _nota_ajustada(r["rating"], r["reviewCount"]) / 5
+        popularidade = math.log1p(r["likes"] + r["searches"]) / math.log1p(maior_popularidade)
+        afinidade = cidades.get((r["city"], r["uf"]), 0) / maior_cidade if cidades else 0
+        preco = 1 - min(abs(r["price"] - preco_medio) / max(preco_medio, 50), 1) if preco_medio is not None else 0
+        em_breve = 1 if r["nextDate"] and datetime.fromisoformat(r["nextDate"]) - agora < timedelta(days=14) else 0
+        perto = 1 - min(r["distance_km"], 100) / 100 if centro and r["distance_km"] is not None else 0
+        ja_reservado = -3 if r["id"] in reservados else 0
+        return 2 * qualidade + popularidade + 1.5 * afinidade + preco + 0.8 * em_breve + perto + ja_reservado
+
+    return sorted(resultados, key=pontos, reverse=True)
 
 def sugestoes(texto: str, perto: Optional[tuple[float, float]] = None) -> dict:
     alvo = _sem_acento(texto)
@@ -191,6 +225,8 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
         "procurados": lambda r: -r["searches"],
         "preco": lambda r: r["price"],
     }
+    if ordem == "para_voce":
+        return _ordenar_para_voce(user_id, resultados, centro)
     chave = chaves.get(ordem) or (lambda r: (
         r["nextDate"] is None,
         r["distance_km"] if r["distance_km"] is not None else 0,

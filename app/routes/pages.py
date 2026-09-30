@@ -82,7 +82,8 @@ def home(current_user):
             "titulo": 'Para onde vamos hoje?',
             "categories": [
                 { "id": "all", "label": "todos", "active": True },
-                { "id": "most-liked", "label": "mais curtidos", "active": False },
+                { "id": "for-you", "label": "para você", "active": False },
+                { "id": "best-rated", "label": "melhor avaliados", "active": False },
                 { "id": "most-searched", "label": "mais procurados", "active": False },
                 { "id": "nearby", "label": "mais perto", "active": False }
             ],
