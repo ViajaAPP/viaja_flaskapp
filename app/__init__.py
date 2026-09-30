@@ -18,6 +18,7 @@ def create_app():
 
     # Registro de Blueprints
     from .routes.socket import socket_bp
+    from .routes.chat_socket import sock
     from .routes.auth import auth_bp
     from .routes.health import health_bp
     from .routes.tour import tour_bp
@@ -40,5 +41,6 @@ def create_app():
     app.register_blueprint(cidades_bp, url_prefix='/cidades')
     app.register_blueprint(favorite_bp, url_prefix='/favorite')
     app.register_blueprint(user_bp, url_prefix='/users')
+    sock.init_app(app)
 
     return app
