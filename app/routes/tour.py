@@ -168,6 +168,7 @@ def list_nearby_tours(current_user):
     try:
         tours = tour_service.list_published_tours_with_address()
         guias = tour_service.find_users({tour['created_by_id'] for tour in tours})
+        favorite_tour_ids = tour_service.list_favorite_tour_ids(current_user['user_id'])
         proximos = []
         for tour in tours:
             endereco = tour.get('address') or {}
@@ -186,6 +187,7 @@ def list_nearby_tours(current_user):
                 "reviewCount": 0,
                 "tag": _texto_da_distancia(km),
                 "tagType": "nearby",
+                "favorite": tour['id'] in favorite_tour_ids,
                 "distance_km": round(km, 1),
                 "city": endereco.get('city'),
                 "uf": endereco.get('uf')
@@ -215,7 +217,8 @@ def get_tour(current_user, tour_id):
             "guide": guide,
             "instances": [_serialize_instance(instance, request_status_by_instance) for instance in instances],
             "is_owner": is_tour_owner(tour, current_user),
-            "can_moderate": can_moderate_tour(tour, current_user)
+            "can_moderate": can_moderate_tour(tour, current_user),
+            "favorite": tour_id in tour_service.list_favorite_tour_ids(current_user['user_id'])
         }), 200
     except Exception as e:
         current_app.logger.error(f"Erro ao obter tour: {e}")

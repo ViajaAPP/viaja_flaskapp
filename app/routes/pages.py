@@ -51,6 +51,7 @@ def home(current_user):
         tours_response = supabase.rpc("get_popular_tours").execute()
         popular_tours = []
         published_tour_ids = tour_service.list_published_tour_ids()
+        favorite_tour_ids = tour_service.list_favorite_tour_ids(current_user['user_id'])
         if tours_response.data:
             for tour in [tour for tour in tours_response.data if tour['id'] in published_tour_ids]:
                 popular_tours.append({
@@ -62,7 +63,8 @@ def home(current_user):
                     "rating": 5,
                     "reviewCount": tour['qt_turistas'],
                     "tag": "Passeio recomendado",
-                    "tagType": "recommended"
+                    "tagType": "recommended",
+                    "favorite": tour['id'] in favorite_tour_ids
                 })
         
         return jsonify({
@@ -242,3 +244,37 @@ def profile(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página de perfil: {str(e)}")
         return jsonify({"error": "Erro ao acessar a página de perfil"}), 500
+
+@pages_bp.route('/favorites', methods=['POST'])
+@token_required
+def favorites(current_user):
+    try:
+        favorites_response = supabase.table("favorite_tour").select("tour_id, created_at").eq("user_id", current_user['user_id']).order("created_at", desc=True).execute()
+        tour_ids = [favorite['tour_id'] for favorite in favorites_response.data or []]
+        if not tour_ids:
+            return jsonify({"tours": []}), 200
+
+        tours_response = supabase.table("tour").select("id, title, photo, created_by_id").in_("id", tour_ids).eq("published", True).execute()
+        tours_by_id = {tour['id']: tour for tour in tours_response.data or []}
+        guias = tour_service.find_users({tour['created_by_id'] for tour in tours_by_id.values()})
+
+        tours = []
+        for tour_id in tour_ids:
+            tour = tours_by_id.get(tour_id)
+            if not tour:
+                continue
+            guia = guias.get(tour['created_by_id']) or {}
+            tours.append({
+                "id": tour['id'],
+                "title": tour['title'],
+                "guideFoto": guia.get('photo'),
+                "guide": f"{guia.get('first_name', '')} {guia.get('last_name', '')}".strip(),
+                "imageUrl": tour['photo'],
+                "rating": 5,
+                "reviewCount": 0,
+                "favorite": True
+            })
+        return jsonify({"tours": tours}), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao acessar a página de favoritos: {e}")
+        return jsonify({"error": "Erro ao acessar a página de favoritos"}), 500

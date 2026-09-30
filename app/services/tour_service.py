@@ -70,3 +70,7 @@ def is_instance_open_for_requests(instance):
 def close_registration_if_full(instance):
     if count_accepted_requests(instance['id']) >= instance['max_capacity']:
         supabase.table("tour_instance").update({"registration": RegistrationStatus.FULL.value}).eq("id", instance['id']).execute()
+
+def list_favorite_tour_ids(user_id):
+    response = supabase.table("favorite_tour").select("tour_id").eq("user_id", user_id).execute()
+    return {favorite['tour_id'] for favorite in response.data or []}
