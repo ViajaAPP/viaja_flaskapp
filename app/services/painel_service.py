@@ -135,3 +135,37 @@ def contagem_do_guia(guia_id):
     resposta = supabase.table("tour_request").select("id", count="exact").eq("status", "PENDING") \
         .in_("tour_instance_id", [i["id"] for i in instancias]).execute()
     return resposta.count or 0
+
+def arquivados_do_guia(guia_id):
+    expirar_pedidos()
+    tours, instancias = _datas_do_guia(guia_id)
+    if not instancias:
+        return {"pedidos": [], "datas": []}
+    agora = datetime.now(timezone.utc)
+    limite = agora - timedelta(days=180)
+    instancia_por_id = {i["id"]: i for i in instancias}
+    pedidos = supabase.table("tour_request").select("id, tour_instance_id, requester_id, status, message, created_at, last_updated")         .in_("tour_instance_id", list(instancia_por_id)).in_("status", ["DENIED", "EXPIRED", "CANCELLED"])         .order("created_at", desc=True).limit(100).execute().data or []
+    pessoas = _pessoas({p["requester_id"] for p in pedidos})
+    itens_pedidos = []
+    for pedido in pedidos:
+        instancia = instancia_por_id[pedido["tour_instance_id"]]
+        tour = tours[instancia["tour_id"]]
+        itens_pedidos.append({
+            **pedido, "tour_id": tour["id"], "tour_title": tour["title"], "tour_photo": tour["photo"],
+            "start_time": instancia["start_time"], "max_capacity": instancia["max_capacity"],
+            "requester": pessoas.get(pedido["requester_id"]) or {},
+        })
+    passadas = [
+        i for i in instancias
+        if limite < _data(i["start_time"]) and (_data(i["start_time"]) < agora - timedelta(hours=6) or i["status"] == "CANCELLED")
+    ]
+    confirmados = {}
+    if passadas:
+        aceitos = supabase.table("tour_request").select("tour_instance_id").eq("status", "ACCEPTED")             .in_("tour_instance_id", [i["id"] for i in passadas]).execute().data or []
+        for pedido in aceitos:
+            confirmados[pedido["tour_instance_id"]] = confirmados.get(pedido["tour_instance_id"], 0) + 1
+    datas = [{
+        **i, "tour_title": tours[i["tour_id"]]["title"], "tour_photo": tours[i["tour_id"]]["photo"],
+        "confirmed": confirmados.get(i["id"], 0),
+    } for i in sorted(passadas, key=lambda i: i["start_time"], reverse=True)]
+    return {"pedidos": itens_pedidos, "datas": datas}

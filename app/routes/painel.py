@@ -15,6 +15,16 @@ def pedidos(current_user):
         current_app.logger.error(f"Erro nos pedidos do painel: {e}")
         return jsonify({"error": "Não conseguimos carregar seus pedidos."}), 500
 
+@painel_bp.route('/arquivados', methods=['GET'])
+@token_required
+@role_required(UserRole.GUIDE)
+def arquivados(current_user):
+    try:
+        return jsonify(painel_service.arquivados_do_guia(current_user['user_id'])), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro nos arquivados do painel: {e}")
+        return jsonify({"error": "Não conseguimos carregar os arquivados."}), 500
+
 @painel_bp.route('/agenda', methods=['GET'])
 @token_required
 @role_required(UserRole.GUIDE)
