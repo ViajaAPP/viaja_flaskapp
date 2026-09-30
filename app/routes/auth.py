@@ -6,7 +6,8 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import supabase
-from app.services import foto_service
+from app.services import foto_service, senha_service
+from app.services.email_service import EmailIndisponivel
 from app.models.enums import UserRole
 
 cnaes_turismo = [7911200, 7912100]
@@ -164,3 +165,33 @@ def login():
         algorithm="HS256"
     )
     return jsonify(token=token, user_id=user['user_id'], role=user['role']), 200
+
+@auth_bp.route('/esqueci-senha', methods=['POST'])
+def esqueci_senha():
+    email = ((request.get_json(silent=True) or {}).get("email") or "").strip().lower()
+    if not email:
+        return jsonify(error="Coloque o email da sua conta."), 400
+    try:
+        senha_service.pedir_troca(email)
+    except EmailIndisponivel:
+        return jsonify(error="O envio de email ainda não está funcionando. Fale com a equipe do Viajá."), 503
+    except Exception as e:
+        current_app.logger.error(f"Erro ao pedir troca de senha: {e}")
+        return jsonify(error="Não conseguimos mandar o email agora. Tente de novo em alguns minutos."), 500
+    return jsonify(message="Se esse email tiver uma conta, mandamos um link para trocar a senha."), 200
+
+@auth_bp.route('/redefinir-senha', methods=['POST'])
+def redefinir_senha():
+    data = request.get_json(silent=True) or {}
+    codigo = data.get("codigo") or ""
+    senha = data.get("password") or ""
+    if len(senha) < 8:
+        return jsonify(error="A senha precisa ter pelo menos 8 caracteres."), 400
+    try:
+        trocou = senha_service.trocar_senha(codigo, senha)
+    except Exception as e:
+        current_app.logger.error(f"Erro ao trocar senha: {e}")
+        return jsonify(error="Não conseguimos trocar a senha agora. Tente de novo."), 500
+    if not trocou:
+        return jsonify(error="Esse link não vale mais. Peça um novo na tela de entrar."), 400
+    return jsonify(message="Senha trocada. Já pode entrar com a senha nova."), 200
