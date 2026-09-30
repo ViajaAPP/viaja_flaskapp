@@ -1,0 +1,548 @@
+[
+  {
+    "status": "manter",
+    "title": "Vila de Itatinga: bondinho centenário na Serra do Mar",
+    "titulo_antigo": null,
+    "city": "Bertioga",
+    "description": "Você atravessa o Rio Itapanhaú de barco e segue uns 7 km de bondinho pela mata até a vila de Itatinga, erguida no começo do século 20 para quem trabalhava na usina hidrelétrica. Lá dentro ficam as casas de madeira, o cinema, o campo do clube e a capela de Nossa Senhora da Conceição. Como a vila fica numa área protegida dentro da usina, a visita só acontece aos sábados e domingos, com monitor credenciado e reserva antecipada.",
+    "meeting_point": "Portinho de Itatinga, na margem do Rio Itapanhaú",
+    "address": {
+      "cep": "11250597",
+      "neighborhood": "Jardim Vicente de Carvalho",
+      "street": "Rua Manoel Gajo",
+      "number": "S/N"
+    },
+    "lat": -23.82638,
+    "lon": -46.14504,
+    "price": 150,
+    "estimated_duration_minutes": 240,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Constru%C3%A7%C3%A3o_da_Usina_de_Itatinga.jpg",
+    "image_author": "Autor desconhecido",
+    "image_license": "Public domain",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Constru%C3%A7%C3%A3o_da_Usina_de_Itatinga.jpg",
+    "vagas": 12,
+    "curtidas": 8,
+    "pedidos": 7,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "O bondinho é uma viagem no tempo. A vila parece parada nos anos 1910, e o guia conhece cada história."
+      },
+      {
+        "nota": 5,
+        "comentario": "Imperdível em Bertioga. A reserva precisa ser feita antes, então foi ótimo ter tudo organizado pelo app."
+      },
+      {
+        "nota": 4,
+        "comentario": "Muito bom. A travessia de barco até o porto é rápida e o passeio é bem tranquilo para crianças."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Trilha d'Água: barco no Itapanhaú e ruínas da usina",
+    "titulo_antigo": null,
+    "city": "Bertioga",
+    "description": "Começa com uma travessia curta de barco pelo Rio Itapanhaú e segue por uns 6 km de caminhada, em que a mata vai de mangue a restinga e floresta de encosta. No caminho aparecem a linha do antigo bondinho de Itatinga e a ponte de ferro sobre o Rio Guaxanduva, até terminar numa piscina natural de água bem clara. Só pode ser feita com monitor credenciado pela prefeitura.",
+    "meeting_point": "Base de saída da travessia, Rua Pastor Djalma da Silva Coimbra, 1277",
+    "address": {
+      "cep": "11256230",
+      "neighborhood": "Rio da Praia",
+      "street": "Rua Pastor Djalma da Silva Coimbra",
+      "number": "1277"
+    },
+    "lat": -23.81313,
+    "lon": -46.11605,
+    "price": 180,
+    "estimated_duration_minutes": 240,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Bertioga_trip_set_%28November_2022%29_224.jpg/1280px-Bertioga_trip_set_%28November_2022%29_224.jpg",
+    "image_author": "Sturm",
+    "image_license": "CC BY-SA 4.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Bertioga_trip_set_(November_2022)_224.jpg",
+    "vagas": 12,
+    "curtidas": 7,
+    "pedidos": 6,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Passeio completo. O barco sobe o rio devagar e o guia vai mostrando as aves e contando da usina. As ruínas no meio da mata são lindas."
+      },
+      {
+        "nota": 5,
+        "comentario": "Fui com minha mãe e ela amou. Dá para ir tranquilo, o guia ajudou em todos os pontos de desembarque."
+      },
+      {
+        "nota": 4,
+        "comentario": "Muito bonito. Só leve repelente, porque no fim da tarde os mosquitos aparecem."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Cachoeira do Guaratuba e Poço do Limão",
+    "titulo_antigo": null,
+    "city": "Bertioga",
+    "description": "São uns 8 km, ida e volta, pela planície do Parque Estadual Restinga de Bertioga, onde a restinga vai virando floresta fechada. A primeira parada é para mergulhar no Poço do Limão, e depois vem a Cachoeira do Guaratuba. A trilha é de nível médio e exige monitor credenciado e agendamento.",
+    "meeting_point": "Entrada do Loteamento Costa do Sol",
+    "address": {
+      "cep": "11267555",
+      "neighborhood": "Costa do Sol",
+      "street": "Avenida Pontal de Guaratuba",
+      "number": "S/N"
+    },
+    "lat": -23.76131,
+    "lon": -45.90083,
+    "price": 200,
+    "estimated_duration_minutes": 360,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Parque_Estadual_Restinga_de_Bertioga_-_Restinga.jpg/1280px-Parque_Estadual_Restinga_de_Bertioga_-_Restinga.jpg",
+    "image_author": "Haroldo Kalleder",
+    "image_license": "CC BY-SA 3.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Parque_Estadual_Restinga_de_Bertioga_-_Restinga.jpg",
+    "vagas": 12,
+    "curtidas": 6,
+    "pedidos": 5,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Trilha puxada, mas vale cada passo. O Poço do Limão tem a água mais gelada e verde que já vi."
+      },
+      {
+        "nota": 4,
+        "comentario": "Sem guia eu teria me perdido fácil. Leve lanche e água, são muitas horas de caminhada."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Cachoeira da Torre 47",
+    "titulo_antigo": null,
+    "city": "Bertioga",
+    "description": "A trilha passa pela velha Ponte da Banana, sobre o Rio Jaguareguava, e entra na Serra do Mar seguindo a linha de transmissão até a torre 47, a que leva a energia de Itatinga até o Porto de Santos. Ao lado dela fica a cachoeira, com piscina natural para descansar. São cerca de 8 km ida e volta, sempre com monitor credenciado.",
+    "meeting_point": "Km 226 da Rodovia Dr. Manoel Hipólito do Rego",
+    "address": {
+      "cep": "11252312",
+      "neighborhood": "São João",
+      "street": "Rodovia Dr. Manoel Hipólito do Rego",
+      "number": "km 226"
+    },
+    "lat": -23.83036,
+    "lon": -46.16457,
+    "price": 200,
+    "estimated_duration_minutes": 300,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Bertioga_%28March_2023%29_024.jpg/1280px-Bertioga_%28March_2023%29_024.jpg",
+    "image_author": "Sturm",
+    "image_license": "CC BY-SA 4.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Bertioga_(March_2023)_024.jpg",
+    "vagas": 12,
+    "curtidas": 5,
+    "pedidos": 4,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "A travessia pela Ponte da Banana é um passeio à parte. Guia atencioso e parou sempre que o grupo precisou."
+      },
+      {
+        "nota": 4,
+        "comentario": "Trilha longa e bem sinalizada pelo guia. Recomendo tênis que possa molhar."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Centro Histórico de Santos de bonde e a pé",
+    "titulo_antigo": null,
+    "city": "Santos",
+    "description": "O passeio começa na Estação do Valongo e segue de bonde histórico pelas igrejas do Valongo, do Carmo e do Rosário, pela Casa da Frontaria Azulejada e pelo Museu do Café, com trechos a pé pelas ruas do porto antigo. O guia vai contando quase 500 anos de história do café e do porto.",
+    "meeting_point": "Estação do Valongo, na bilheteria do bonde",
+    "address": {
+      "cep": "11010260",
+      "neighborhood": "Valongo",
+      "street": "Largo Marquês de Monte Alegre",
+      "number": "2"
+    },
+    "lat": -23.93105,
+    "lon": -46.33361,
+    "price": 50,
+    "estimated_duration_minutes": 180,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Valongo_Station.jpg/1280px-Valongo_Station.jpg",
+    "image_author": "CrisFSantana",
+    "image_license": "CC BY-SA 4.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Valongo_Station.jpg",
+    "vagas": 12,
+    "curtidas": 8,
+    "pedidos": 8,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Andar de bonde e ouvir a história do café em cada prédio é outra coisa. O guia sabe muito."
+      },
+      {
+        "nota": 5,
+        "comentario": "Achei que conhecia Santos, mas descobri um monte de lugar novo no centro. Vou indicar para todo mundo."
+      },
+      {
+        "nota": 4,
+        "comentario": "Passeio ótimo. No verão o sol é forte no meio do dia, então vá de chapéu."
+      },
+      {
+        "nota": 5,
+        "comentario": "Perfeito para quem gosta de história. A parada no Valongo foi a minha preferida."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Monte Serrat de funicular",
+    "titulo_antigo": null,
+    "city": "Santos",
+    "description": "O funicular de 1927 sobe 147 metros em poucos minutos. Lá em cima ficam o antigo cassino, o Santuário de Nossa Senhora do Monte Serrat e uma vista de Santos e do porto inteiro. Quem tiver fôlego pode descer pela escadaria de pedra, que passa pelo meio da mata.",
+    "meeting_point": "Estação de embarque do funicular",
+    "address": {
+      "cep": "11013220",
+      "neighborhood": "Centro",
+      "street": "Praça Correa de Melo",
+      "number": "33"
+    },
+    "lat": -23.93834,
+    "lon": -46.32973,
+    "price": 70,
+    "estimated_duration_minutes": 90,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Bonde_Funicular_do_Monte_Serrat_-_Esta%C3%A7%C3%A3o_de_Embarque_-_panoramio.jpg/1280px-Bonde_Funicular_do_Monte_Serrat_-_Esta%C3%A7%C3%A3o_de_Embarque_-_panoramio.jpg",
+    "image_author": "Emilio Pechini",
+    "image_license": "CC BY 3.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Bonde_Funicular_do_Monte_Serrat_-_Esta%C3%A7%C3%A3o_de_Embarque_-_panoramio.jpg",
+    "vagas": 12,
+    "curtidas": 9,
+    "pedidos": 6,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "A vista lá de cima é a mais bonita de Santos. O funicular é uma graça."
+      },
+      {
+        "nota": 4,
+        "comentario": "Vale muito com o guia contando a história do morro e do cassino. Fui no fim da tarde e peguei o pôr do sol."
+      },
+      {
+        "nota": 5,
+        "comentario": "Passeio curto e muito gostoso. Ótimo para quem está com pouco tempo na cidade."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Escuna pela Baía de Santos",
+    "titulo_antigo": null,
+    "city": "Santos",
+    "description": "A escuna sai da Ponta da Praia e passa pela Fortaleza da Barra Grande, pela Ilha das Palmas e pelo canal do porto, com parada de uns 30 minutos para banho perto do Sangava. Na volta, a vista é da orla e dos navios nos terminais.",
+    "meeting_point": "Ponte Edgard Perdigão, na Ponta da Praia",
+    "address": {
+      "cep": "11030400",
+      "neighborhood": "Ponta da Praia",
+      "street": "Avenida Rei Pelé",
+      "number": "S/N"
+    },
+    "lat": -23.99172,
+    "lon": -46.30288,
+    "price": 60,
+    "estimated_duration_minutes": 90,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Santos_Ponta_da_Praia.JPG/1280px-Santos_Ponta_da_Praia.JPG",
+    "image_author": "Pechini",
+    "image_license": "CC BY 3.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Santos_Ponta_da_Praia.JPG",
+    "vagas": 30,
+    "curtidas": 7,
+    "pedidos": 7,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Ver o porto de perto, os navios enormes e a Fortaleza da Barra do mar é muito diferente."
+      },
+      {
+        "nota": 4,
+        "comentario": "Gostei bastante. O mar estava calmo e a narração durante o trajeto deixa tudo mais interessante."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Museu do Café na antiga Bolsa",
+    "titulo_antigo": null,
+    "city": "Santos",
+    "description": "O museu ocupa o prédio da Bolsa Oficial de Café, de 1922, e só o salão do pregão, com o vitral e as telas de Benedito Calixto, já vale a visita. Dá para entender como o café mudou Santos e ainda tomar um cafezinho especial na cafeteria do térreo. Aos sábados a entrada é gratuita; nos outros dias custa R$ 16, com meia.",
+    "meeting_point": "Entrada do Museu do Café, na Rua XV de Novembro",
+    "address": {
+      "cep": "11010151",
+      "neighborhood": "Centro",
+      "street": "Rua Quinze de Novembro",
+      "number": "95"
+    },
+    "lat": -23.93223,
+    "lon": -46.33005,
+    "price": 16,
+    "estimated_duration_minutes": 90,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/Coffee_Museum_%28Q9660690%29.jpg/1280px-Coffee_Museum_%28Q9660690%29.jpg",
+    "image_author": "CrisFSantana",
+    "image_license": "CC BY-SA 4.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Coffee_Museum_(Q9660690).jpg",
+    "vagas": 15,
+    "curtidas": 6,
+    "pedidos": 4,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "O salão do pregão é lindo, e com o guia explicando como funcionava a bolsa fica tudo muito mais claro."
+      },
+      {
+        "nota": 5,
+        "comentario": "Terminei na cafeteria do museu provando um café especial. Programa perfeito para dia de chuva."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Aquário Municipal na Ponta da Praia",
+    "titulo_antigo": null,
+    "city": "Santos",
+    "description": "O Aquário de Santos, aberto em 1945, é o mais antigo do país e fica de frente para o mar na Ponta da Praia. São mais de 30 tanques, com pinguins, tartarugas e os leões-marinhos, que sempre juntam criança no vidro. Abre de terça a domingo e o ingresso custa R$ 10, com meia e entrada livre para crianças de até 7 anos e para quem tem 65 anos ou mais.",
+    "meeting_point": "Bilheteria do Aquário",
+    "address": {
+      "cep": "11030908",
+      "neighborhood": "Ponta da Praia",
+      "street": "Avenida Bartholomeu de Gusmão",
+      "number": "S/N"
+    },
+    "lat": -23.98627,
+    "lon": -46.30837,
+    "price": 10,
+    "estimated_duration_minutes": 75,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Fachadado_Aquario_de_Santos.jpg/1280px-Fachadado_Aquario_de_Santos.jpg",
+    "image_author": "Santista1982 (usuário do Wikimedia Commons)",
+    "image_license": "Public domain",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Fachadado_Aquario_de_Santos.jpg",
+    "vagas": 20,
+    "curtidas": 8,
+    "pedidos": 5,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Barato e as crianças adoraram os pinguins e as tartarugas."
+      },
+      {
+        "nota": 4,
+        "comentario": "Passeio rápido e gostoso. Vale combinar com uma caminhada pela Ponta da Praia depois."
+      },
+      {
+        "nota": 4,
+        "comentario": "Bem cuidado e com monitores explicando os tanques. Chegue cedo no fim de semana."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Trilha e Praia de Itaquitanduva",
+    "titulo_antigo": null,
+    "city": "São Vicente",
+    "description": "São uns 4 km de Mata Atlântica no Parque Estadual Xixová-Japuí, com árvores grandes e trechos de mirante, até a Praia de Itaquitanduva, uma das mais selvagens da Baixada. O parque abre de quarta a domingo e a entrada é gratuita, mas com guia você anda no ritmo certo e entende a mata. Vale chegar cedo, porque a portaria fecha às 15h.",
+    "meeting_point": "Centro de Visitantes do Parque Estadual Xixová-Japuí",
+    "address": {
+      "cep": "11325000",
+      "neighborhood": "Japuí",
+      "street": "Avenida Tupiniquins",
+      "number": "1009"
+    },
+    "lat": -23.98288,
+    "lon": -46.39305,
+    "price": 90,
+    "estimated_duration_minutes": 240,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Trilha_de_Itaquitanduva.jpg/1280px-Trilha_de_Itaquitanduva.jpg",
+    "image_author": "Heitor Cavalcanti de Albuquerque",
+    "image_license": "CC BY-SA 3.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Trilha_de_Itaquitanduva.jpg",
+    "vagas": 12,
+    "curtidas": 6,
+    "pedidos": 5,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Trilha no meio da mata que termina numa praia quase deserta. Parece que você saiu da Baixada."
+      },
+      {
+        "nota": 5,
+        "comentario": "O guia conhece todos os detalhes do parque e mostrou até uma cobra de longe, com todo cuidado."
+      },
+      {
+        "nota": 3,
+        "comentario": "Bonito, mas a trilha é escorregadia depois da chuva. Achei mais difícil do que esperava."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Teleférico do Voturuá",
+    "titulo_antigo": "Teleférico do Voturuá e Mirante da Ilha Porchat",
+    "city": "São Vicente",
+    "description": "O teleférico sobe uns 11 minutos por cima da mata, da Praia do Itararé até o alto do Morro do Voturuá. Lá de cima dá para ver Santos, São Vicente e a Ilha Porchat de uma vez só. O guia vai apontando cada praia e contando a história da cidade enquanto a cadeirinha sobe.",
+    "meeting_point": "Base do teleférico, na Praia do Itararé",
+    "address": {
+      "cep": "11321000",
+      "neighborhood": "Itararé",
+      "street": "Avenida Ayrton Senna da Silva",
+      "number": "500"
+    },
+    "lat": -23.96813,
+    "lon": -46.36505,
+    "price": 110,
+    "estimated_duration_minutes": 120,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/S%C3%A3o_Vicente_Chairlift_2019_064.jpg/1280px-S%C3%A3o_Vicente_Chairlift_2019_064.jpg",
+    "image_author": "Mike Peel",
+    "image_license": "CC BY-SA 4.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:S%C3%A3o_Vicente_Chairlift_2019_064.jpg",
+    "vagas": 12,
+    "curtidas": 7,
+    "pedidos": 5,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "A subida no teleférico com a vista da praia é linda, e lá em cima o guia mostrou toda a baía."
+      },
+      {
+        "nota": 4,
+        "comentario": "Ótimo passeio, mas no fim de semana a fila pode ser grande. Com o guia a gente não se preocupou com nada."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Marco zero do Brasil: Centro Histórico de São Vicente",
+    "titulo_antigo": null,
+    "city": "São Vicente",
+    "description": "A caminhada passa pela Praça 22 de Janeiro, marco da fundação da vila em 1532, pela Biquinha de Anchieta, a fonte onde, conta a tradição, o padre José de Anchieta conversava com os indígenas, e pela Casa Martim Afonso. O guia vai costurando essas paradas com a história da primeira vila do Brasil. Termina na Praia do Gonzaguinha, onde a esquadra portuguesa desembarcou.",
+    "meeting_point": "Biquinha de Anchieta, na Praça 22 de Janeiro",
+    "address": {
+      "cep": "11310090",
+      "neighborhood": "Centro",
+      "street": "Praça Vinte e Dois de Janeiro",
+      "number": "S/N"
+    },
+    "lat": -23.97141,
+    "lon": -46.38593,
+    "price": 50,
+    "estimated_duration_minutes": 120,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Biquinha_SV.jpg",
+    "image_author": "Eric and Christian",
+    "image_license": "CC BY 2.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Biquinha_SV.jpg",
+    "vagas": 12,
+    "curtidas": 5,
+    "pedidos": 4,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Não fazia ideia de que a primeira vila do Brasil era aqui. A Biquinha e a Casa Martim Afonso são muito legais."
+      },
+      {
+        "nota": 4,
+        "comentario": "Passeio a pé bem tranquilo e cheio de história. O guia é apaixonado pela cidade."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Cachoeira do Laranjal",
+    "titulo_antigo": null,
+    "city": "Praia Grande",
+    "description": "É a trilha mais puxada de Praia Grande, pela mata do Parque Estadual da Serra do Mar, e pede um pouco de preparo. O prêmio é a cachoeira e, lá do alto, a vista da orla inteira. A trilha funciona de quarta a domingo, só de manhã, e o ideal é ir com monitor ambiental.",
+    "meeting_point": "Portaria da Trilha do Laranjal, na Avenida Wilson de Oliveira, 2074",
+    "address": {
+      "cep": "11712010",
+      "neighborhood": "Melvi",
+      "street": "Avenida Wilson de Oliveira",
+      "number": "2074"
+    },
+    "lat": -24.03753,
+    "lon": -46.53551,
+    "price": 80,
+    "estimated_duration_minutes": 180,
+    "image_url": null,
+    "image_author": null,
+    "image_license": null,
+    "image_source_page": null,
+    "vagas": 12,
+    "curtidas": 4,
+    "pedidos": 3,
+    "avaliacoes": [
+      {
+        "nota": 4,
+        "comentario": "Pouca gente conhece e por isso a cachoeira fica vazia. Só dá para achar a trilha com quem sabe o caminho."
+      },
+      {
+        "nota": 5,
+        "comentario": "Surpresa boa em Praia Grande. Água limpa e o caminho no meio da mata é lindo."
+      }
+    ]
+  },
+  {
+    "status": "manter",
+    "title": "Café da manhã e canoa no Portinho",
+    "titulo_antigo": null,
+    "city": "Praia Grande",
+    "description": "Você rema em águas calmas do estuário, de colete e remo fornecidos, com o mangue e as aves em volta. Depois dá para emendar com o café da manhã do Portinho Marina. A canoa só sai nos fins de semana de manhã e costuma lotar, então vale reservar antes.",
+    "meeting_point": "Portinho Marina",
+    "address": {
+      "cep": "11726010",
+      "neighborhood": "Sítio do Campo",
+      "street": "Rua Paulo Sérgio Garcia",
+      "number": "18531"
+    },
+    "lat": -23.99008,
+    "lon": -46.40577,
+    "price": 40,
+    "estimated_duration_minutes": 90,
+    "image_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Praia_Grande_-_Portinho_-SP-_Brasil_-_panoramio.jpg/1280px-Praia_Grande_-_Portinho_-SP-_Brasil_-_panoramio.jpg",
+    "image_author": "Jacinto@lves de Souz…",
+    "image_license": "CC BY-SA 3.0",
+    "image_source_page": "https://commons.wikimedia.org/wiki/File:Praia_Grande_-_Portinho_-SP-_Brasil_-_panoramio.jpg",
+    "vagas": 12,
+    "curtidas": 6,
+    "pedidos": 5,
+    "avaliacoes": [
+      {
+        "nota": 5,
+        "comentario": "Remar no rio de manhã cedo com tudo calmo e depois tomar café com vista para a água. Amei."
+      },
+      {
+        "nota": 4,
+        "comentario": "Bom para iniciantes, o guia ensinou a remar antes de sair. O café da manhã é caprichado."
+      }
+    ]
+  },
+  {
+    "status": "remover",
+    "title": "Trilha da Cachoeira"
+  },
+  {
+    "status": "remover",
+    "title": "Canoa no Rio Jaguareguava"
+  },
+  {
+    "status": "remover",
+    "title": "Restinga e praia do Itaguaré"
+  },
+  {
+    "status": "remover",
+    "title": "Escuna pelo Canal de Bertioga"
+  },
+  {
+    "status": "remover",
+    "title": "Barco pelo Rio Itanhaém até o encontro dos rios"
+  },
+  {
+    "status": "remover",
+    "title": "Centro histórico de Itanhaém: Convento e Matriz"
+  },
+  {
+    "status": "remover",
+    "title": "Passarela e Cama de Anchieta"
+  }
+]
