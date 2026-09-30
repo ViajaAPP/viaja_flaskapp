@@ -5,6 +5,7 @@ from app.services import tour_service
 from app.models.enums import UserRole, RequestStatus
 from app.models.request_models import TourRequestCreateModel
 from app.utils.auth import token_required, role_required, can_moderate_tour
+from app.services import aviso_service
 
 request_bp = Blueprint('request', __name__)
 
@@ -59,6 +60,7 @@ def create_tour_request(current_user, tour_instance_id):
         request_data = response.data
         if not request_data:
             return jsonify({"error": "Erro ao criar solicitação para tour"}), 500
+        aviso_service.pedido_novo(tour, tour_instance, current_user['user_id'])
         return jsonify({"message": "Solicitação para tour criada com sucesso!", "request_id": request_data[0]['id']}), 201
     except Exception as e:
         current_app.logger.error(f"Exceção ao criar solicitação para tour: {str(e)}")
@@ -186,6 +188,7 @@ def update_tour_request_status(current_user, request_id):
         supabase.table("tour_request").update({"status": new_status, "last_updated": datetime.now(timezone.utc).isoformat()}).eq("id", request_id).execute()
         if new_status == RequestStatus.ACCEPTED:
             tour_service.close_registration_if_full(tour_instance_response.data[0])
+        aviso_service.pedido_respondido(tour, tour_instance_response.data[0], tour_request_response.data[0]['requester_id'], new_status == RequestStatus.ACCEPTED)
         return jsonify({"message": "Status do tour request atualizado com sucesso!"}), 200
     except Exception as e:
         current_app.logger.error(f"Exceção ao atualizar status do tour request: {str(e)}")

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from app.services.supabase_service import supabase
-from app.services import tour_service, cidades_service, foto_service, review_service
+from app.services import tour_service, cidades_service, foto_service, review_service, aviso_service
 from app.models.enums import UserRole, RegistrationStatus, RequestStatus
 from app.models.tour_models import TourCreateModel, TourUpdateModel, TourInstanceCreateModel, TourInstanceUpdateModel
 from app.models.address_models import AddressCreateModel
@@ -436,6 +436,8 @@ def update_tour_instance(current_user, tour_id, instance_id):
 
     try:
         supabase.table("tour_instance").update(update).eq("id", instance_id).execute()
+        if update.get('status') == 'CANCELLED' and instance['status'] != 'CANCELLED':
+            aviso_service.data_cancelada(tour, instance)
         return jsonify({"message": "Instância de tour atualizada com sucesso"}), 200
     except Exception as e:
         current_app.logger.error(f"Erro ao atualizar instância de tour: {e}")
@@ -578,6 +580,9 @@ def create_tour_review(current_user, tour_id):
         if not instance_id:
             return jsonify({"error": "Só quem foi no passeio pode avaliar, e uma vez por data."}), 403
         review_service.create_review(tour_id, instance_id, current_user['user_id'], nota, comentario)
+        tour = tour_service.find_tour(tour_id)
+        if tour:
+            aviso_service.avaliacao_nova(tour, current_user['user_id'], nota)
         return jsonify({"message": "Obrigado pela avaliação!"}), 201
     except Exception as e:
         current_app.logger.error(f"Erro ao avaliar passeio: {e}")
