@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from app.services.supabase_service import supabase
-from app.services import tour_service, cidades_service, foto_service, review_service, aviso_service
+from app.services import tour_service, cidades_service, foto_service, review_service, aviso_service, resposta_service
 from app.models.enums import UserRole, RegistrationStatus, RequestStatus
 from app.models.tour_models import TourCreateModel, TourUpdateModel, TourInstanceCreateModel, TourInstanceUpdateModel
 from app.models.address_models import AddressCreateModel
@@ -244,6 +244,7 @@ def get_tour(current_user, tour_id):
             "reviews": review_service.list_reviews(tour_id),
             "rating": review_service.summary_by_tour([tour_id]).get(tour_id, {"average": None, "count": 0}),
             "review_instance_id": review_service.instance_to_review(tour_id, current_user['user_id']),
+            "guide_response": resposta_service.tempo_de_resposta(tour['created_by_id']),
             "guide": guide,
             "instances": [_serialize_instance(instance, request_status_by_instance) for instance in instances],
             "is_owner": is_tour_owner(tour, current_user),
