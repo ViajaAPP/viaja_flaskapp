@@ -8,7 +8,7 @@ cidades_bp = Blueprint('cidades', __name__)
 @token_required
 def buscar_cidades(current_user):
     texto = (request.args.get('q') or '').strip()
-    if len(texto) < 2:
+    if not texto:
         return jsonify([]), 200
     cidades = cidades_service.buscar_cidades(texto, request.args.get('uf'))
     return jsonify([{"name": cidade['name'], "uf": cidade['state']} for cidade in cidades]), 200

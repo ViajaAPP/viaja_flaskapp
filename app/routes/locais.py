@@ -14,7 +14,7 @@ def _ponto(prefixo=''):
 @token_required
 def buscar_locais(current_user):
     texto = (request.args.get('q') or '').strip()
-    if len(texto) < 3:
+    if not texto:
         return jsonify([]), 200
     try:
         return jsonify(local_service.buscar(texto, _ponto())), 200

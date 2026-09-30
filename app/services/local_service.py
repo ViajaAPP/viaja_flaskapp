@@ -50,10 +50,18 @@ def _local(feature: dict) -> Optional[dict]:
         "lon": lon,
     }
 
-def buscar(texto: str, perto: Optional[tuple[float, float]] = None, limite: int = 6) -> list[dict]:
+def buscar(texto: str, perto: Optional[tuple[float, float]] = None, limite: int = 6, so_pontos: bool = False) -> list[dict]:
     lat, lon = perto or CENTRO_PADRAO
-    dados = _consultar("/api/", {"q": texto, "limit": limite * 2, "lat": lat, "lon": lon})
-    locais = [local for local in map(_local, dados.get("features") or []) if local]
+    dados = _consultar("/api/", {"q": texto, "limit": limite * 3, "lat": lat, "lon": lon})
+    features = dados.get("features") or []
+    if so_pontos:
+        features = [f for f in features if (f.get("properties") or {}).get("osm_key") not in ("place", "boundary")]
+    locais, vistos = [], set()
+    for local in map(_local, features):
+        chave = (local or {}).get("nome", "").lower(), (local or {}).get("rua", "").lower(), (local or {}).get("cidade", "").lower()
+        if local and chave not in vistos:
+            vistos.add(chave)
+            locais.append(local)
     return locais[:limite]
 
 def endereco_do_ponto(lat: float, lon: float) -> Optional[dict]:
