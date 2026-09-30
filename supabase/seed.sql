@@ -1,5 +1,5 @@
 insert into public."user" (user_id, username, first_name, last_name, email, password, phone, role, photo, cnpj) values
-  (1, 'guia', 'Gabi', 'Guia', 'guia@viaja.local', '$2b$12$aD0mNS8fD7uup764CN37ZOkFj3vp.lihqNSFU4OiuRdLb3d7TLfja', '11999990001', 'GUIDE', 'https://i.pravatar.cc/150?img=47', '12345678000190'),
+  (1, 'guia', 'Fabi', 'Guia', 'guia@viaja.local', '$2b$12$aD0mNS8fD7uup764CN37ZOkFj3vp.lihqNSFU4OiuRdLb3d7TLfja', '11999990001', 'GUIDE', 'https://i.pravatar.cc/150?img=47', '12345678000190'),
   (2, 'viajante', 'Tito', 'Viajante', 'viajante@viaja.local', '$2b$12$aD0mNS8fD7uup764CN37ZOkFj3vp.lihqNSFU4OiuRdLb3d7TLfja', '11999990002', 'TOURIST', 'https://i.pravatar.cc/150?img=12', null),
   (3, 'admin', 'Ana', 'Admin', 'admin@viaja.local', '$2b$12$aD0mNS8fD7uup764CN37ZOkFj3vp.lihqNSFU4OiuRdLb3d7TLfja', '11999990003', 'ADMIN', '', null);
 
