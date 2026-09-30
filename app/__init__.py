@@ -31,6 +31,7 @@ def create_app():
     from .routes.user import user_bp
     from .routes.locais import locais_bp
     from .routes.busca import busca_bp
+    from .routes.avisos import avisos_bp
 
     app.register_blueprint(socket_bp, url_prefix='/ws')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -45,6 +46,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix='/users')
     app.register_blueprint(locais_bp, url_prefix='/locais')
     app.register_blueprint(busca_bp, url_prefix='/busca')
+    app.register_blueprint(avisos_bp, url_prefix='/avisos')
     sock.init_app(app)
 
     return app
