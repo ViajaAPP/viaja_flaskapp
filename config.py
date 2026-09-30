@@ -8,6 +8,7 @@ class Config:
     SUPABASE_KEY = os.getenv('SUPABASE_KEY')
     AUTH_CRYPT_KEY = os.getenv('AUTH_CRYPT_KEY')
     NGROK_AUTHTOKEN = os.getenv('NGROK_AUTHTOKEN')
+    CIDADESBR_API_URL = os.getenv('CIDADESBR_API_URL', 'https://cidadesbr-api.onrender.com')
 
 class DevelopmentConfig(Config):
     DEBUG = True

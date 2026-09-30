@@ -41,6 +41,10 @@ def list_tour_instances(tour_id):
     response = supabase.table("tour_instance").select("*").eq("tour_id", tour_id).order("start_time").execute()
     return response.data or []
 
+def list_published_tours_with_address():
+    response = supabase.table("tour").select("id, title, photo, created_by_id, address(city, uf)").eq("published", True).execute()
+    return response.data or []
+
 def list_published_tour_ids():
     response = supabase.table("tour").select("id").eq("published", True).execute()
     return {tour['id'] for tour in response.data or []}

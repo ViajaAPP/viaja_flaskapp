@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from app.services.supabase_service import supabase
-from app.services import tour_service
+from app.services import tour_service, cidades_service
 from app.models.enums import UserRole, RegistrationStatus, RequestStatus
 from app.models.tour_models import TourCreateModel, TourUpdateModel, TourInstanceCreateModel, TourInstanceUpdateModel
 from app.models.address_models import AddressCreateModel
@@ -151,6 +151,50 @@ def list_managed_tours(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao listar tours: {e}")
         return jsonify({"error": "Erro ao listar tours"}), 500
+
+def _texto_da_distancia(km):
+    if km < 1:
+        return "A menos de 1 km de você"
+    return f"A {round(km)} km de você"
+
+@tour_bp.route('/perto', methods=['GET'])
+@token_required
+def list_nearby_tours(current_user):
+    try:
+        origem = (float(request.args['lat']), float(request.args['lon']))
+    except (KeyError, ValueError):
+        return jsonify({"error": "Informe lat e lon válidos"}), 400
+
+    try:
+        tours = tour_service.list_published_tours_with_address()
+        guias = tour_service.find_users({tour['created_by_id'] for tour in tours})
+        proximos = []
+        for tour in tours:
+            endereco = tour.get('address') or {}
+            destino = cidades_service.coordenadas_da_cidade(endereco.get('city'), endereco.get('uf'))
+            if not destino:
+                continue
+            km = cidades_service.distancia_km(origem, destino)
+            guia = guias.get(tour['created_by_id']) or {}
+            proximos.append({
+                "id": tour['id'],
+                "title": tour['title'],
+                "guideFoto": guia.get('photo'),
+                "guide": f"{guia.get('first_name', '')} {guia.get('last_name', '')}".strip(),
+                "imageUrl": tour['photo'],
+                "rating": 5,
+                "reviewCount": 0,
+                "tag": _texto_da_distancia(km),
+                "tagType": "nearby",
+                "distance_km": round(km, 1),
+                "city": endereco.get('city'),
+                "uf": endereco.get('uf')
+            })
+        proximos.sort(key=lambda item: item['distance_km'])
+        return jsonify(proximos), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao listar tours por perto: {e}")
+        return jsonify({"error": "Erro ao listar tours por perto"}), 500
 
 @tour_bp.route('/<int:tour_id>', methods=['GET'])
 @token_required
