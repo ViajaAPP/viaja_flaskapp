@@ -78,7 +78,7 @@ def home(current_user):
                 "name": user['first_name'],
                 "fotoUser": user['photo']
             },
-            "greeting": 'Bem-vindo de volta,',
+            "greeting": 'Que bom te ver,',
             "titulo": 'Para onde vamos hoje?',
             "categories": [
                 { "id": "all", "label": "todos", "active": True },
