@@ -65,7 +65,23 @@ def chat_socket(ws):
 
     try:
         while True:
-            ws.receive()
+            try:
+                msg = json.loads(ws.receive() or "")
+            except (TypeError, json.JSONDecodeError):
+                continue
+            if not isinstance(msg, dict) or msg.get("type") != "message":
+                continue
+
+            chat_id = msg.get("chat_id")
+            texto = str(msg.get("text") or "").strip()
+            if chat_id not in chats or not texto:
+                continue
+
+            mensagem = chat_service.salvar_mensagem(chat_id, usuario['user_id'], texto)
+            if not mensagem:
+                continue
+            publish(chat_id, {"type": "message", **mensagem}, exceto_user_id=usuario['user_id'])
+            ws.send(json.dumps({"type": "sent", "client_id": msg.get("client_id"), **mensagem}, ensure_ascii=False))
     except ConnectionClosed:
         pass
     finally:
