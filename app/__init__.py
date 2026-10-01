@@ -2,7 +2,6 @@ from flask import Flask, request
 from flask_cors import CORS
 from config import config_dict
 from .services.supabase_service import init_supabase
-from .services.message_queue_service import init_message_worker
 from .services.swagger import init_swagger
 import os
 from .services import cache_service
@@ -16,7 +15,6 @@ def create_app():
     app.config.from_object(config_dict[env])
 
     init_supabase(app)
-    init_message_worker()
     init_swagger(app)
 
     # Registro de Blueprints
@@ -25,7 +23,6 @@ def create_app():
     from .routes.auth import auth_bp
     from .routes.health import health_bp
     from .routes.tour import tour_bp
-    from .routes.message import messages_bp
     from .routes.request import request_bp
     from .routes.chat import chat_bp
     from .routes.pages import pages_bp
@@ -42,7 +39,6 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(health_bp, url_prefix='/health')
     app.register_blueprint(tour_bp, url_prefix='/tour')
-    app.register_blueprint(messages_bp, url_prefix='/messages')
     app.register_blueprint(request_bp, url_prefix='/request')
     app.register_blueprint(chat_bp, url_prefix='/chat')
     app.register_blueprint(pages_bp, url_prefix='/pages')
