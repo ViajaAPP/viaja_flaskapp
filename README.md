@@ -34,7 +34,7 @@ A versão que está funcionando fica na branch `staging`. É ela que você deve 
 - **Busca e recomendação.** A busca acha passeio e destino do Brasil inteiro desde a primeira letra. Dá para filtrar só os grátis ou por data, e ordenar por nota, preço ou distância. O "Para você" monta a ordem pelo que a pessoa já procurou e reservou (`app/services/busca_service.py`).
 - **Avaliações.** Quem foi ao passeio dá nota e escreve como foi. O passeio mostra a média e quanto tempo o guia costuma levar para responder.
 - **Avisos.** O app avisa quando um pedido é aceito, recusado ou vence, e quando um evento muda.
-- **Eventos.** O produtor ou o guia cadastra o evento e ele só aparece depois que um admin aprova. Se o admin recusar, precisa dizer o motivo.
+- **Eventos.** Só quem se cadastrou como produtor de eventos cria evento, e ele só aparece depois que um admin aprova. Se o admin recusar, precisa dizer o motivo.
 - **Endereço e mapa.** A busca de endereço usa o Photon, que é gratuito e não precisa de chave. As cidades vêm da CidadesBR-API (veja mais abaixo).
 - **Cache.** As respostas que mais se repetem ficam guardadas por alguns minutos, no Redis quando ele existe e na memória quando não existe. Qualquer mudança em passeio, pedido, favorito ou evento limpa o que estava guardado.
 - **E-mail.** Serve para recuperar a senha. Sai por uma conta do Gmail com senha de app.

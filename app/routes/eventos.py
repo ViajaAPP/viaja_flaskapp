@@ -88,7 +88,7 @@ def listar(current_user):
 
 @eventos_bp.route('/meus', methods=['GET'])
 @token_required
-@role_required(UserRole.EVENT_PROMOTER, UserRole.GUIDE, UserRole.ADMIN)
+@role_required(UserRole.EVENT_PROMOTER, UserRole.ADMIN)
 def meus(current_user):
     return jsonify(evento_service.listar_do_organizador(current_user['user_id'])), 200
 
@@ -105,7 +105,7 @@ def analise(current_user):
 
 @eventos_bp.route('/foto', methods=['POST'])
 @token_required
-@role_required(UserRole.EVENT_PROMOTER, UserRole.GUIDE, UserRole.ADMIN)
+@role_required(UserRole.EVENT_PROMOTER, UserRole.ADMIN)
 def enviar_foto(current_user):
     arquivo = request.files.get('photo')
     if not arquivo:
@@ -128,7 +128,7 @@ def detalhe(current_user, evento_id):
 
 @eventos_bp.route('/', methods=['POST'])
 @token_required
-@role_required(UserRole.EVENT_PROMOTER, UserRole.GUIDE, UserRole.ADMIN)
+@role_required(UserRole.EVENT_PROMOTER, UserRole.ADMIN)
 def criar(current_user):
     campos, erro = _campos(request.get_json(silent=True) or {}, exigir=True)
     if erro:
@@ -142,7 +142,7 @@ def criar(current_user):
 
 @eventos_bp.route('/<int:evento_id>', methods=['PATCH'])
 @token_required
-@role_required(UserRole.EVENT_PROMOTER, UserRole.GUIDE, UserRole.ADMIN)
+@role_required(UserRole.EVENT_PROMOTER, UserRole.ADMIN)
 def editar(current_user, evento_id):
     evento, erro = _evento_ou_erro(evento_id, current_user, precisa_ser_dono=True)
     if erro:
@@ -157,7 +157,7 @@ def editar(current_user, evento_id):
 
 @eventos_bp.route('/<int:evento_id>/cancelar', methods=['POST'])
 @token_required
-@role_required(UserRole.EVENT_PROMOTER, UserRole.GUIDE, UserRole.ADMIN)
+@role_required(UserRole.EVENT_PROMOTER, UserRole.ADMIN)
 def cancelar(current_user, evento_id):
     evento, erro = _evento_ou_erro(evento_id, current_user, precisa_ser_dono=True)
     if erro:
