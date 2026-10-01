@@ -160,12 +160,12 @@ def destinos_em_alta(limite: int = 8) -> list[dict]:
         })
     return destinos
 
-def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, raio_km: Optional[float] = None,
+def buscar_passeios(user_id: Optional[int], centro: Optional[tuple[float, float]] = None, raio_km: Optional[float] = None,
                     texto: str = "", preco_max: Optional[float] = None, gratuito: bool = False,
                     quando: Optional[str] = None, nota_min: Optional[float] = None, ordem: str = "relevancia") -> list[dict]:
     passeios = _passeios_publicados()
     guias = tour_service.find_users({p["created_by_id"] for p in passeios})
-    favoritos = tour_service.list_favorite_tour_ids(user_id)
+    favoritos = tour_service.list_favorite_tour_ids(user_id) if user_id else set()
     curtidas = tour_service.count_favorites_by_tour()
     pedidos = tour_service.count_requests_by_tour()
     avaliacoes = review_service.summary_by_tour()
@@ -228,7 +228,7 @@ def buscar_passeios(user_id: int, centro: Optional[tuple[float, float]] = None, 
         "procurados": lambda r: -r["searches"],
         "preco": lambda r: r["price"],
     }
-    if ordem == "para_voce":
+    if ordem == "para_voce" and user_id:
         return _ordenar_para_voce(user_id, resultados, centro)
     chave = chaves.get(ordem) or (lambda r: (
         r["nextDate"] is None,

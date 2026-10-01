@@ -49,3 +49,17 @@ def is_admin(current_user):
 
 def can_moderate_tour(tour, current_user):
     return is_tour_owner(tour, current_user) or is_admin(current_user)
+
+def token_opcional(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get("Authorization") or ""
+        current_user = None
+        if auth_header.startswith("Bearer "):
+            try:
+                current_user = ler_token(auth_header.split(" ")[1])
+            except Exception:
+                current_user = None
+        return f(current_user, *args, **kwargs)
+
+    return decorated

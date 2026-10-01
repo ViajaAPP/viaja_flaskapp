@@ -8,6 +8,7 @@ TEMPO_PADRAO = 60
 
 _memoria: dict[str, tuple[float, str]] = {}
 _versoes: dict[str, int] = {}
+_contagens: dict[str, tuple[float, int]] = {}
 _trava = threading.Lock()
 _redis = None
 _redis_tentado = False
@@ -88,3 +89,23 @@ def lembrar(espaco, segundos=TEMPO_PADRAO):
             return valor
         return envolvida
     return decorador
+
+def contar(chave, segundos):
+    cliente = _cliente()
+    if cliente:
+        try:
+            total = cliente.incr(f"viaja:conta:{chave}")
+            if total == 1:
+                cliente.expire(f"viaja:conta:{chave}", segundos)
+            return total
+        except Exception:
+            pass
+    agora = time.time()
+    with _trava:
+        fim, total = _contagens.get(chave, (0, 0))
+        if fim <= agora:
+            fim, total = agora + segundos, 0
+        if len(_contagens) > 5000:
+            _contagens.clear()
+        _contagens[chave] = (fim, total + 1)
+        return total + 1
