@@ -236,16 +236,27 @@ def handle_client(conn: socket.socket, addr, app):
             client_meta[conn] = {"user_id": user_id, "chat_ids": chat_ids}
         subscribe(conn, chat_ids)
         enviar(conn, {"type": "ready", "chats": [int(c) for c in chat_ids]})
+        for chat_id in chat_ids:
+            enviar(conn, {"type": "locations", "chat_id": int(chat_id), "items": chat_service.localizacoes_recentes(chat_id)})
 
         # 3. Loop de leitura de mensagens
         while True:
             msg = ler_texto(conn)
             if msg is None:
                 break
+
+            chat_id = str(msg.get("chat_id"))
+            if msg.get("type") in ("location", "location_off"):
+                if chat_id in chat_ids:
+                    with app.app_context():
+                        payload = chat_service.tratar_localizacao(int(chat_id), user_id, msg)
+                    if payload:
+                        publish(chat_id, payload, sender_conn=conn)
+                continue
+
             if msg.get("type") != "message":
                 continue
 
-            chat_id = str(msg.get("chat_id"))
             text = str(msg.get("text") or "").strip()
             if chat_id not in chat_ids or not text:
                 continue

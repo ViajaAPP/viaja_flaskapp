@@ -62,6 +62,8 @@ def chat_socket(ws):
 
     subscribe(ws, usuario['user_id'], chats)
     ws.send(json.dumps({"type": "ready", "chats": chats}))
+    for chat_id in chats:
+        ws.send(json.dumps({"type": "locations", "chat_id": chat_id, "items": chat_service.localizacoes_recentes(chat_id)}))
 
     try:
         while True:
@@ -69,10 +71,19 @@ def chat_socket(ws):
                 msg = json.loads(ws.receive() or "")
             except (TypeError, json.JSONDecodeError):
                 continue
-            if not isinstance(msg, dict) or msg.get("type") != "message":
+            if not isinstance(msg, dict):
                 continue
 
             chat_id = msg.get("chat_id")
+            if msg.get("type") in ("location", "location_off"):
+                if chat_id in chats:
+                    payload = chat_service.tratar_localizacao(chat_id, usuario['user_id'], msg)
+                    if payload:
+                        publish(chat_id, payload, exceto_user_id=usuario['user_id'])
+                continue
+            if msg.get("type") != "message":
+                continue
+
             texto = str(msg.get("text") or "").strip()
             if chat_id not in chats or not texto:
                 continue
