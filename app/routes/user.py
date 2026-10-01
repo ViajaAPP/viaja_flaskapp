@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
-from app.services import foto_service, cripto_service
+from app.services import foto_service, cripto_service, perfil_service
 from app.utils.auth import token_required
 
 user_bp = Blueprint('user', __name__)
@@ -11,6 +11,18 @@ CAMPOS_OBRIGATORIOS = {"first_name": "Conta pra gente seu nome", "last_name": "C
 def _foto_atual(user_id):
     response = supabase.table("user").select("photo").eq("user_id", user_id).execute()
     return response.data[0]['photo'] if response.data else None
+
+@user_bp.route('/<int:user_id>/publico', methods=['GET'])
+@token_required
+def perfil_publico(current_user, user_id):
+    try:
+        perfil = perfil_service.perfil_publico(user_id, current_user['user_id'])
+    except Exception as e:
+        current_app.logger.error(f"Erro ao abrir perfil público: {e}")
+        return jsonify({"error": "Não conseguimos abrir esse perfil agora. Tente de novo."}), 500
+    if not perfil:
+        return jsonify({"error": "Perfil não encontrado"}), 404
+    return jsonify(perfil), 200
 
 @user_bp.route('/me', methods=['PATCH'])
 @token_required

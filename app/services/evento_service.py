@@ -45,7 +45,7 @@ def _serializar(evento, organizadores, presencas, user_id, centro=None, detalhad
             "description": evento["description"], "address": endereco,
             "review_note": evento["review_note"] if item["is_owner"] else None,
             "going_people": [
-                {"first_name": (pessoas.get(p["user_id"]) or {}).get("first_name"), "photo": (pessoas.get(p["user_id"]) or {}).get("photo")}
+                {"user_id": p["user_id"], "first_name": (pessoas.get(p["user_id"]) or {}).get("first_name"), "photo": (pessoas.get(p["user_id"]) or {}).get("photo")}
                 for p in do_evento[:12]
             ],
         })

@@ -208,6 +208,7 @@ def buscar_passeios(user_id: Optional[int], centro: Optional[tuple[float, float]
             "imageUrl": passeio.get("photo"),
             "guide": f"{guia.get('first_name', '')} {guia.get('last_name', '')}".strip(),
             "guideFoto": guia.get("photo"),
+            "guideId": passeio["created_by_id"],
             "price": preco,
             "city": endereco.get("city"),
             "uf": endereco.get("uf"),

@@ -29,6 +29,7 @@ def list_reviews(tour_id, limit=30):
         "rating": review['rating'],
         "comment": review['comment'],
         "created_at": review['created_at'],
+        "author_id": review['user_id'],
         "author": (users.get(review['user_id']) or {}).get('first_name') or "Viajante",
         "author_photo": (users.get(review['user_id']) or {}).get('photo'),
     } for review in reviews]
