@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
-from app.services import foto_service
+from app.services import foto_service, cripto_service
 from app.utils.auth import token_required
 
 user_bp = Blueprint('user', __name__)
@@ -22,6 +22,8 @@ def update_me(current_user):
         return jsonify({"error": "Confira os campos destacados", "fields": erros}), 400
     if not changes:
         return jsonify({"error": "Nada para atualizar"}), 400
+    if "phone" in changes:
+        changes["phone"] = cripto_service.cifrar(changes["phone"], "user.phone")
     try:
         supabase.table("user").update(changes).eq("user_id", current_user['user_id']).execute()
         return jsonify({"message": "Perfil salvo"}), 200

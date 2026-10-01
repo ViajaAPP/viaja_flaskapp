@@ -6,7 +6,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import supabase
-from app.services import foto_service, senha_service
+from app.services import foto_service, senha_service, cripto_service
 from app.services.email_service import EmailIndisponivel
 from app.models.enums import UserRole
 
@@ -96,7 +96,9 @@ def add_user():
             return jsonify({"error": "CNPJ não é de um promotor de eventos"}), 400
         
     try:
-        response = supabase.table("user").insert(user.dict()).execute()
+        novo = user.dict()
+        novo['phone'] = cripto_service.cifrar(novo.get('phone'), "user.phone")
+        response = supabase.table("user").insert(novo).execute()
         user_data = response.data
         if not user_data:
             return jsonify({"error": "Erro ao salvar usuário no banco de dados"}), 500

@@ -250,7 +250,9 @@ def profile(current_user):
         user_response = supabase.table("user").select("first_name, last_name, email, phone, photo, role").eq("user_id", current_user['user_id']).execute()
         if not user_response.data:
             return jsonify({"error": "Usuário não encontrado"}), 404
-        return jsonify(user_response.data[0]), 200
+        perfil = user_response.data[0]
+        perfil['phone'] = cripto_service.decifrar(perfil.get('phone'), "user.phone")
+        return jsonify(perfil), 200
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página de perfil: {str(e)}")
         return jsonify({"error": "Erro ao acessar a página de perfil"}), 500
