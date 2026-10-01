@@ -7,6 +7,19 @@ from datetime import timedelta, datetime, timezone
 
 pages_bp = Blueprint('pages', __name__)
 
+FUSO = timezone(timedelta(hours=-3))
+
+def _rotulo_da_saida(inicio):
+    saida = datetime.fromisoformat(inicio.replace('Z', '+00:00')).astimezone(FUSO)
+    agora = datetime.now(FUSO)
+    if saida <= agora:
+        return 'Em andamento'
+    if saida.date() == agora.date():
+        return 'Saída hoje às ' + saida.strftime('%H:%M')
+    if saida.date() == (agora + timedelta(days=1)).date():
+        return 'Saída amanhã às ' + saida.strftime('%H:%M')
+    return 'Saída em ' + saida.strftime('%d/%m/%Y, %H:%M')
+
 @pages_bp.route('/home', methods=['POST'])
 @token_required
 def home(current_user):
@@ -134,21 +147,8 @@ def chats(current_user):
             tours_response = supabase.rpc("get_tours_tourist", {"tourist_id": current_user['user_id']}).execute()
 
         for tour in tours_response.data if tours_response else []:
-            tour_date = ''
-            current_time = datetime.now(timezone.utc)
-            
-            start_time_str = tour['start_time'].replace('Z', '+00:00')
-            tour_start_time = datetime.fromisoformat(start_time_str)
-            
-            if tour_start_time <= current_time:
-                tour_date = 'Evento em andamento'
-            elif tour_start_time.date() == current_time.date():
-                tour_date = 'Saída hoje às ' + tour_start_time.strftime('%H:%M')
-            elif tour_start_time.date() == (current_time + timedelta(days=1)).date():
-                tour_date = 'Saída amanhã às ' + tour_start_time.strftime('%H:%M')
-            else:
-                tour_date = 'Saída em ' + tour_start_time.strftime('%d/%m/%Y, %H:%M')
-                
+            tour_date = _rotulo_da_saida(tour['start_time'])
+
             members = supabase.rpc("get_tour_members", {"tour_instance_id": tour['tour_instance_id']}).execute()
                 
             tour_list.append({
@@ -162,6 +162,17 @@ def chats(current_user):
                 "members": members.data if members.data else []
             })
             
+        for evento in chat_service.grupos_de_evento(current_user['user_id']):
+            tour_list.append({
+                "event_id": evento['id'],
+                "tour_title": evento['title'],
+                "tour_photo": evento['photo'],
+                "tour_date": _rotulo_da_saida(evento['start_time']),
+                "chat_id": evento['chat_id'],
+                "chat_open": True,
+                "members": evento['members'],
+            })
+
         return jsonify({
             "tour_list": tour_list,
             "direct_conversations": []
@@ -211,22 +222,8 @@ def chat(current_user):
             return jsonify({"error": "Conversa não encontrada"}), 404
         if not chat_service.participa(current_user['user_id'], chat):
             return jsonify({"error": "Conversa não encontrada"}), 404
-        chat_name = ''
-        chat_response = supabase.rpc('get_tour_by_chat', {"chat_id": chat_id}).execute()
-        if chat_response.data:
-            chat_name = chat_response.data[0]['tour_title']
-            
-        members_response = supabase.rpc('get_tour_members', {"tour_instance_id": chat_response.data[0]['tour_instance_id']}).execute()
-        user_list = []
-        if members_response.data:
-            for member in members_response.data:
-                user_list.append({
-                    "user_id": member['user_id'],
-                    "first_name": member['first_name'],
-                    "last_name": member['last_name'],
-                    "photo": member['photo']
-                })
-        
+        chat_name, user_list = chat_service.nome_e_membros(chat)
+
         messages_list = chat_service.ultimas_mensagens(chat_id)
         socket_connection_url = _get_websocket_url()
         if not socket_connection_url:
@@ -238,7 +235,9 @@ def chat(current_user):
             "chat_name": chat_name,
             "user_list": user_list,
             "messages_list": messages_list,
-            "socket_connection_url": socket_connection_url
+            "socket_connection_url": socket_connection_url,
+            "is_event": bool(chat.get('event_id')),
+            "map": chat_service.mapa_do_chat(chat),
         }), 200
     except Exception as e:
         current_app.logger.error(f"Erro ao acessar a página do chat: {str(e)}")
