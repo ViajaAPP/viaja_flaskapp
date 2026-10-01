@@ -53,6 +53,15 @@ def create_app():
     sock.init_app(app)
 
     @app.after_request
+    def cabecalhos_de_seguranca(resposta):
+        resposta.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resposta.headers.setdefault("X-Frame-Options", "DENY")
+        resposta.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        if env == "production":
+            resposta.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        return resposta
+
+    @app.after_request
     def limpar_cache_depois_de_escrever(resposta):
         if request.method != 'GET' and resposta.status_code < 400 and request.path.startswith(PREFIXOS_QUE_MUDAM_PASSEIOS):
             cache_service.invalidar("passeios")
