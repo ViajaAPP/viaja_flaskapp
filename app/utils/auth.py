@@ -3,6 +3,10 @@ from flask import current_app, jsonify, request
 import jwt
 from app.models.enums import UserRole
 
+def ler_token(token):
+    data = jwt.decode(token, current_app.config['AUTH_CRYPT_KEY'], algorithms=["HS256"])
+    return {"user_id": data["user_id"], "role": data.get("role")}
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -16,13 +20,7 @@ def token_required(f):
         try:
             # extrai e decodifica o token
             token = auth_header.split(" ")[1]
-            data = jwt.decode(
-                token,
-                current_app.config['AUTH_CRYPT_KEY'],
-                algorithms=["HS256"]
-            )
-            # adiciona os dados do usuário no contexto da requisição
-            current_user = {"user_id": data["user_id"], "role": data.get("role")}
+            current_user = ler_token(token)
         except jwt.ExpiredSignatureError:
             return jsonify({"message": "Token expirado!"}), 401
         except Exception:

@@ -1,67 +1,71 @@
 import json
 import threading
-from flask import request
 from flask_sock import Sock, ConnectionClosed
+from app.utils.auth import ler_token
+from app.services import chat_service
 
 sock = Sock()
 
-chat_subscriptions: dict[str, set] = {}
+ESPERA_DO_LOGIN = 10
+
+chat_subscriptions: dict[str, dict] = {}
 subscriptions_lock = threading.Lock()
 
-def subscribe(ws, chat_ids: list[str]):
+def subscribe(ws, user_id, chat_ids):
     with subscriptions_lock:
         for chat_id in chat_ids:
-            chat_subscriptions.setdefault(chat_id, set()).add(ws)
+            chat_subscriptions.setdefault(str(chat_id), {})[ws] = user_id
 
 def unsubscribe(ws):
     with subscriptions_lock:
         for chat_id in list(chat_subscriptions.keys()):
-            chat_subscriptions[chat_id].discard(ws)
+            chat_subscriptions[chat_id].pop(ws, None)
             if not chat_subscriptions[chat_id]:
                 del chat_subscriptions[chat_id]
 
-def publish(chat_id: str, payload: dict, sender_ws):
+def publish(chat_id, payload, exceto_user_id=None):
     with subscriptions_lock:
-        subscribers = set(chat_subscriptions.get(chat_id, set()))
+        inscritos = dict(chat_subscriptions.get(str(chat_id), {}))
 
-    message = json.dumps(payload, ensure_ascii=False)
-    for ws in subscribers:
-        if ws is sender_ws:
+    mensagem = json.dumps(payload, ensure_ascii=False)
+    for ws, user_id in inscritos.items():
+        if user_id == exceto_user_id:
             continue
         try:
-            ws.send(message)
+            ws.send(mensagem)
         except (ConnectionClosed, OSError):
             unsubscribe(ws)
 
+def _login(ws):
+    try:
+        dados = json.loads(ws.receive(timeout=ESPERA_DO_LOGIN) or "")
+    except (TypeError, json.JSONDecodeError):
+        return None, []
+    if not isinstance(dados, dict) or dados.get("type") != "auth":
+        return None, []
+    try:
+        usuario = ler_token(str(dados.get("token") or ""))
+    except Exception:
+        return None, []
+    pedidos = [int(c) for c in dados.get("chats") or [] if str(c).isdigit()]
+    return usuario, chat_service.chats_permitidos(usuario['user_id'], pedidos)
+
 @sock.route('/ws')
 def chat_socket(ws):
-    user_id = request.args.get("user_id")
-    if not user_id:
-        ws.close(reason=1008, message="Missing user_id")
+    usuario, chats = _login(ws)
+    if not usuario:
+        ws.close(reason=1008, message="Login necessário")
+        return
+    if not chats:
+        ws.close(reason=1008, message="Sem acesso a essas conversas")
         return
 
-    chat_ids = [c.strip() for c in request.args.get("chats", "").split(",") if c.strip()]
-    subscribe(ws, chat_ids)
+    subscribe(ws, usuario['user_id'], chats)
+    ws.send(json.dumps({"type": "ready", "chats": chats}))
 
     try:
         while True:
-            data = ws.receive()
-            try:
-                msg = json.loads(data)
-            except (TypeError, json.JSONDecodeError):
-                continue
-
-            chat_id = msg.get("chat_id")
-            text = msg.get("text")
-            if chat_id is None or not text:
-                continue
-
-            publish(str(chat_id), {
-                "type": "message",
-                "chat_id": str(chat_id),
-                "user_id": user_id,
-                "text": text,
-            }, sender_ws=ws)
+            ws.receive()
     except ConnectionClosed:
         pass
     finally:

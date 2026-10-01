@@ -1,8 +1,7 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
 from app.utils.auth import token_required
-from app.services import tour_service, review_service
-from app.routes.chat import _get_last_messages
+from app.services import tour_service, review_service, chat_service, cripto_service
 from app.routes.socket import _get_websocket_url
 from datetime import timedelta, datetime, timezone
 
@@ -203,10 +202,15 @@ def chat(current_user):
                     message:
                         type: string
     """
-    chat_id = request.json.get('chat_id')
+    chat_id = (request.get_json(silent=True) or {}).get('chat_id')
     if not chat_id:
         return jsonify({"error": "ID do chat é obrigatório"}), 400
     try:
+        chat = chat_service.buscar_chat(chat_id)
+        if not chat:
+            return jsonify({"error": "Chat não encontrado"}), 404
+        if not chat_service.participa(current_user['user_id'], chat):
+            return jsonify({"error": "Você não participa dessa conversa"}), 403
         chat_name = ''
         chat_response = supabase.rpc('get_tour_by_chat', {"chat_id": chat_id}).execute()
         if chat_response.data:
@@ -223,13 +227,12 @@ def chat(current_user):
                     "photo": member['photo']
                 })
         
-        messages_list = _get_last_messages(chat_id)
+        messages_list = chat_service.ultimas_mensagens(chat_id)
         socket_connection_url = _get_websocket_url()
-        print("URL do WebSocket:", socket_connection_url)  # Log para verificar a URL do WebSocket
         if not socket_connection_url:
             return jsonify({"error": "URL do WebSocket não encontrada"}), 500
-        
-        socket_connection_url = socket_connection_url + f"/ws?user_id={current_user['user_id']}&chats={chat_id}"
+
+        socket_connection_url = socket_connection_url.rstrip("/") + "/ws"
         
         return jsonify({
             "chat_name": chat_name,
