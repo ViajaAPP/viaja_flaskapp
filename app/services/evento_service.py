@@ -81,6 +81,22 @@ def listar_do_organizador(user_id):
     presencas = _presencas([e["id"] for e in eventos])
     return [{**_serializar(e, organizadores, presencas, user_id), "review_note": e["review_note"]} for e in eventos]
 
+def listar_onde_vou(user_id):
+    ids = [p["event_id"] for p in supabase.table("event_attendance").select("event_id").eq("user_id", user_id).execute().data or []]
+    if not ids:
+        return {"proximos": [], "passados": []}
+    eventos = supabase.table("event").select(CAMPOS).in_("id", ids).in_("status", ["PUBLISHED", "CANCELLED", "DONE"]).order("start_time").execute().data or []
+    organizadores = _pessoas({e["organizer_id"] for e in eventos})
+    presencas = _presencas([e["id"] for e in eventos])
+    agora = datetime.now(timezone.utc)
+    proximos, passados = [], []
+    for evento in eventos:
+        item = {**_serializar(evento, organizadores, presencas, user_id), "address": evento.get("address")}
+        fim = _data(evento["end_time"] or evento["start_time"])
+        (proximos if fim >= agora and evento["status"] == "PUBLISHED" else passados).append(item)
+    passados.reverse()
+    return {"proximos": proximos, "passados": passados}
+
 def listar_para_analise():
     eventos = supabase.table("event").select(CAMPOS).eq("status", "IN_REVIEW").order("created_at").execute().data or []
     organizadores = _pessoas({e["organizer_id"] for e in eventos})
