@@ -208,9 +208,9 @@ def chat(current_user):
     try:
         chat = chat_service.buscar_chat(chat_id)
         if not chat:
-            return jsonify({"error": "Chat não encontrado"}), 404
+            return jsonify({"error": "Conversa não encontrada"}), 404
         if not chat_service.participa(current_user['user_id'], chat):
-            return jsonify({"error": "Você não participa dessa conversa"}), 403
+            return jsonify({"error": "Conversa não encontrada"}), 404
         chat_name = ''
         chat_response = supabase.rpc('get_tour_by_chat', {"chat_id": chat_id}).execute()
         if chat_response.data:

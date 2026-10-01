@@ -43,7 +43,7 @@ def init_chat(current_user, tour_instance_id):
         return jsonify({"error": "Tour não encontrado"}), 404
     tour = tour_response.data[0]
     if tour['created_by_id'] != current_user['user_id']:
-        return jsonify({"error": "Acesso negado"}), 403
+        return jsonify({"error": "Passeio não encontrado"}), 404
 
     # cria ou recupera o chat para esta instância de tour
     chat_response = supabase.table("chat").select("*").eq("tour_instance_id", tour_instance_id).execute()
@@ -141,9 +141,9 @@ def send_message(current_user, chat_id):
     try:
         chat = chat_service.buscar_chat(chat_id)
         if not chat:
-            return jsonify({"error": "Chat não encontrado"}), 404
+            return jsonify({"error": "Conversa não encontrada"}), 404
         if not chat_service.participa(current_user['user_id'], chat):
-            return jsonify({"error": "Você não participa dessa conversa"}), 403
+            return jsonify({"error": "Conversa não encontrada"}), 404
 
         mensagem = chat_service.salvar_mensagem(chat_id, current_user['user_id'], content)
         publish(chat_id, {"type": "message", **mensagem}, exceto_user_id=current_user['user_id'])
@@ -157,9 +157,9 @@ def send_message(current_user, chat_id):
 def get_chat_messages(current_user, chat_id):
     chat = chat_service.buscar_chat(chat_id)
     if not chat:
-        return jsonify({"error": "Chat não encontrado"}), 404
+        return jsonify({"error": "Conversa não encontrada"}), 404
     if not chat_service.participa(current_user['user_id'], chat):
-        return jsonify({"error": "Você não participa dessa conversa"}), 403
+        return jsonify({"error": "Conversa não encontrada"}), 404
     limite = min(request.args.get('limit', 20, type=int), 100)
     inicio = max(request.args.get('offset', 0, type=int), 0)
     return jsonify(chat_service.ultimas_mensagens(chat_id, limite, inicio)), 200
