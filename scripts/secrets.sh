@@ -4,10 +4,10 @@ set -euo pipefail
 CONFIGURACAO_GCLOUD="${GCLOUD_CONFIG:-viaja}"
 NOME_NO_DRIVE="${DRIVE_FILE:-viaja-backend.env}"
 ARQUIVO_ENV="${ENV_FILE:-.env}"
-URL_WS_LOCAL="ws://localhost:8765"
+URL_WS_LOCAL="ws://localhost:5000"
 DRIVE="https://www.googleapis.com/drive/v3/files"
 DRIVE_UPLOAD="https://www.googleapis.com/upload/drive/v3/files"
-VARIAVEIS="SUPABASE_URL SUPABASE_KEY AUTH_CRYPT_KEY NGROK_API_TOKEN NGROK_WS_TOKEN FLASK_ENV SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD CIDADESBR_API_URL CIDADESBR_ADMIN_API_KEY CONTAS_TESTE_SENHA"
+VARIAVEIS="SUPABASE_URL SUPABASE_KEY AUTH_CRYPT_KEY DADOS_CRYPT_KEY NGROK_API_TOKEN FLASK_ENV SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD CIDADESBR_API_URL CIDADESBR_ADMIN_API_KEY CONTAS_TESTE_SENHA"
 
 ok()    { printf '  . %s\n' "$1"; }
 aviso() { printf '  ! %s\n' "$1" >&2; }
@@ -64,6 +64,10 @@ gera_chave() {
   python -c "import secrets; print(secrets.token_urlsafe(48), end='')"
 }
 
+gera_chave_dos_dados() {
+  python -c "import base64, os; print(base64.urlsafe_b64encode(os.urandom(32)).decode(), end='')"
+}
+
 escreve_env() {
   local temporario
   temporario="$(mktemp)"
@@ -96,7 +100,7 @@ valor_atual() {
 }
 
 comando_local() {
-  local status url chave auth
+  local status url chave auth dados
   status="$(npx -y supabase@latest status -o env)"
   url="$(printf '%s\n' "$status" | grep -E '^API_URL=' | cut -d= -f2- | tr -d '"')"
   chave="$(printf '%s\n' "$status" | grep -E '^SERVICE_ROLE_KEY=' | cut -d= -f2- | tr -d '"')"
@@ -106,8 +110,10 @@ comando_local() {
   fi
   auth="$(valor_atual AUTH_CRYPT_KEY)"
   [[ -n "$auth" ]] || auth="$(gera_chave)"
-  printf 'SUPABASE_URL=%s\nSUPABASE_KEY=%s\nAUTH_CRYPT_KEY=%s\nPUBLIC_URL_WS=%s\n' \
-    "$url" "$chave" "$auth" "$URL_WS_LOCAL" | escreve_env
+  dados="$(valor_atual DADOS_CRYPT_KEY)"
+  [[ -n "$dados" ]] || dados="$(gera_chave_dos_dados)"
+  printf 'SUPABASE_URL=%s\nSUPABASE_KEY=%s\nAUTH_CRYPT_KEY=%s\nDADOS_CRYPT_KEY=%s\nPUBLIC_URL_WS=%s\n' \
+    "$url" "$chave" "$auth" "$dados" "$URL_WS_LOCAL" | escreve_env
 }
 
 comando_pull() {
@@ -136,13 +142,23 @@ comando_set() {
 
 comando_gerar() {
   usa_configuracao_do_projeto
-  local atual
-  atual="$(baixa_do_drive 2>/dev/null || true)"
+  local atual="" mudou=""
+  if [[ -n "$(id_do_arquivo)" ]]; then
+    atual="$(baixa_do_drive)"
+  fi
   if printf '%s\n' "$atual" | grep -qE '^AUTH_CRYPT_KEY=.+'; then
     ok "AUTH_CRYPT_KEY já tem valor. Trocar desloga todo mundo; use 'set AUTH_CRYPT_KEY' se for isso mesmo"
-    return
+  else
+    atual="$(printf '%s' "$atual" | troca_variavel AUTH_CRYPT_KEY "$(gera_chave)")"
+    mudou=1
   fi
-  printf '%s' "$atual" | troca_variavel AUTH_CRYPT_KEY "$(gera_chave)" | sobe_para_o_drive
+  if printf '%s\n' "$atual" | grep -qE '^DADOS_CRYPT_KEY=.+'; then
+    ok "DADOS_CRYPT_KEY já tem valor. Trocar deixa as mensagens e os telefones guardados ilegíveis"
+  else
+    atual="$(printf '%s' "$atual" | troca_variavel DADOS_CRYPT_KEY "$(gera_chave_dos_dados)")"
+    mudou=1
+  fi
+  [[ -z "$mudou" ]] || printf '%s\n' "$atual" | sobe_para_o_drive
   unset atual
 }
 
@@ -158,7 +174,7 @@ case "${1:-}" in
     echo "  pull   escreve o .env com o arquivo $NOME_NO_DRIVE do seu Google Drive"
     echo "  push   manda um .env inteiro para o Drive"
     echo "  set    troca um valor no arquivo do Drive"
-    echo "  gerar  cria a AUTH_CRYPT_KEY aleatória no arquivo do Drive"
+    echo "  gerar  cria a AUTH_CRYPT_KEY e a DADOS_CRYPT_KEY que faltarem no arquivo do Drive"
     exit 1
     ;;
 esac

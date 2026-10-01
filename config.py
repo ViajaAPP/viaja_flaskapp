@@ -7,6 +7,7 @@ class Config:
     SUPABASE_URL = os.getenv('SUPABASE_URL')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY')
     AUTH_CRYPT_KEY = os.getenv('AUTH_CRYPT_KEY')
+    DADOS_CRYPT_KEY = os.getenv('DADOS_CRYPT_KEY')
     NGROK_AUTHTOKEN = os.getenv('NGROK_AUTHTOKEN')
     CIDADESBR_API_URL = os.getenv('CIDADESBR_API_URL', 'https://cidadesbr-api.onrender.com')
     APP_URL = os.getenv('APP_URL', 'http://localhost:4200')

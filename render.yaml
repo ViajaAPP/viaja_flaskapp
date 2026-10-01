@@ -26,6 +26,8 @@ services:
         sync: false
       - key: AUTH_CRYPT_KEY
         sync: false
+      - key: DADOS_CRYPT_KEY
+        sync: false
       - key: APP_URL
         value: https://viaja-app.com.br
       - key: SMTP_HOST
