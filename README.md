@@ -34,7 +34,7 @@ A versão que está funcionando fica na branch `staging`. É ela que você deve 
 - **Busca e recomendação.** A busca acha passeio e destino do Brasil inteiro desde a primeira letra. Dá para filtrar só os grátis ou por data, e ordenar por nota, preço ou distância. O "Para você" monta a ordem pelo que a pessoa já procurou e reservou (`app/services/busca_service.py`).
 - **Avaliações.** Quem foi ao passeio dá nota e escreve como foi. O passeio mostra a média e quanto tempo o guia costuma levar para responder.
 - **Avisos.** O app avisa quando um pedido é aceito, recusado ou vence, e quando um evento muda.
-- **Eventos.** O produtor cadastra o evento e ele só aparece depois que um admin aprova. Se o admin recusar, precisa dizer o motivo. Por enquanto essa parte existe só no back, as telas ainda estão sendo feitas.
+- **Eventos.** O produtor ou o guia cadastra o evento e ele só aparece depois que um admin aprova. Se o admin recusar, precisa dizer o motivo.
 - **Endereço e mapa.** A busca de endereço usa o Photon, que é gratuito e não precisa de chave. As cidades vêm da CidadesBR-API (veja mais abaixo).
 - **Cache.** As respostas que mais se repetem ficam guardadas por alguns minutos, no Redis quando ele existe e na memória quando não existe. Qualquer mudança em passeio, pedido, favorito ou evento limpa o que estava guardado.
 - **E-mail.** Serve para recuperar a senha. Sai por uma conta do Gmail com senha de app.
@@ -88,7 +88,8 @@ Pronto, aí você tem:
 Para entrar no app, use uma das contas de teste. A senha de todas é `viaja123`:
 - `guia@viaja.local`: a Fabi, guia com passeios publicados;
 - `viajante@viaja.local`: o Tito, que reserva passeios;
-- `admin@viaja.local`: quem modera.
+- `admin@viaja.local`: quem modera e aprova os eventos;
+- `produtor@viaja.local`: a Lia, que cadastra eventos.
 
 Se você bagunçar os dados e quiser voltar ao começo, rode `npx supabase db reset`.
 
@@ -149,7 +150,7 @@ Algumas variáveis têm um valor padrão e só precisam ir no `.env` se você qu
 O `.env` nunca vai para o git. Para voltar ao banco local, rode `bash scripts/secrets.sh local`.
 
 ### Contas de teste na produção
-A produção tem as mesmas contas de teste do modo local, mas a senha **não** é `viaja123`. É a `CONTAS_TESTE_SENHA` que o `pull` colocou no seu `.env`:
+A produção tem as mesmas contas de teste do modo local, inclusive a da Lia, mas a senha **não** é `viaja123`. É a `CONTAS_TESTE_SENHA` que o `pull` colocou no seu `.env`:
 ```bash
 grep CONTAS_TESTE_SENHA .env
 ```
@@ -161,7 +162,7 @@ Só quem pode editar o arquivo no Drive consegue fazer isso:
 - `bash scripts/secrets.sh gerar` cria uma `AUTH_CRYPT_KEY` aleatória, se ainda não tiver uma.
 
 ### Banco de produção
-Toda mudança na estrutura do banco vira um arquivo em `supabase/migrations`, com a data no nome. A primeira, `schema_inicial`, só descreve o banco que já existia. Depois dela vieram as fotos, os favoritos, a troca de senha, a localização dos endereços, as avaliações, os avisos, a reserva instantânea com mínimo de pessoas e os eventos. Todas já estão em produção, menos a dos eventos, que vai junto com as telas.
+Toda mudança na estrutura do banco vira um arquivo em `supabase/migrations`, com a data no nome. A primeira, `schema_inicial`, só descreve o banco que já existia. Depois dela vieram as fotos, os favoritos, a troca de senha, a localização dos endereços, as avaliações, os avisos, a reserva instantânea com mínimo de pessoas e os eventos. Todas já estão em produção.
 
 Para aplicar as que faltam:
 ```bash
