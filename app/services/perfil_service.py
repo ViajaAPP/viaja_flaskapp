@@ -1,3 +1,5 @@
+from collections import Counter
+from datetime import datetime, timezone
 from app.services import supabase_service, busca_service, review_service, resposta_service, evento_service
 
 LIMITE_DE_AVALIACOES = 10
@@ -5,7 +7,7 @@ LIMITE_DE_AVALIACOES = 10
 def _pessoa(user_id):
     dados = (
         supabase_service.supabase.table("user")
-        .select("user_id, first_name, last_name, photo, role, created_at")
+        .select("user_id, first_name, last_name, photo, role, bio, created_at")
         .eq("user_id", user_id)
         .execute()
         .data
@@ -78,6 +80,76 @@ def _nota_geral(tour_ids):
         return None
     return {"average": round(sum(n["average"] * n["count"] for n in notas) / total, 1), "count": total}
 
+def _agora():
+    return datetime.now(timezone.utc).isoformat()
+
+def _numeros_de_viajante(user_id):
+    db = supabase_service.supabase
+    pedidos = (
+        db.table("tour_request")
+        .select("tour_instance(start_time, status, tour(address(city, uf)))")
+        .eq("requester_id", user_id)
+        .eq("status", "ACCEPTED")
+        .execute()
+        .data or []
+    )
+    agora = _agora()
+    feitas = [
+        p["tour_instance"] for p in pedidos
+        if p.get("tour_instance") and p["tour_instance"]["start_time"] < agora and p["tour_instance"]["status"] != "CANCELLED"
+    ]
+    presencas = (
+        db.table("event_attendance")
+        .select("event(start_time, status, address(city, uf))")
+        .eq("user_id", user_id)
+        .execute()
+        .data or []
+    )
+    eventos = [
+        p["event"] for p in presencas
+        if p.get("event") and p["event"]["start_time"] < agora and p["event"]["status"] in ("PUBLISHED", "DONE")
+    ]
+    cidades = Counter()
+    for viagem in feitas:
+        endereco = ((viagem.get("tour") or {}).get("address")) or {}
+        if endereco.get("city"):
+            cidades[(endereco["city"], endereco.get("uf"))] += 1
+    for evento in eventos:
+        endereco = evento.get("address") or {}
+        if endereco.get("city"):
+            cidades[(endereco["city"], endereco.get("uf"))] += 1
+    return {
+        "trips": len(feitas),
+        "events_attended": len(eventos),
+        "cities": [{"city": c, "uf": uf, "count": n} for (c, uf), n in cidades.most_common()],
+    }
+
+def _numeros_de_guia(tour_ids, ativos):
+    if not tour_ids:
+        return None
+    db = supabase_service.supabase
+    instancias = db.table("tour_instance").select("id, start_time, status").in_("tour_id", list(tour_ids)).execute().data or []
+    agora = _agora()
+    realizadas = [i["id"] for i in instancias if i["start_time"] < agora and i["status"] != "CANCELLED"]
+    guiados = 0
+    if realizadas:
+        guiados = len(
+            db.table("tour_request").select("id").in_("tour_instance_id", realizadas).eq("status", "ACCEPTED").execute().data or []
+        )
+    return {"travelers_guided": guiados, "tours_done": len(realizadas), "tours_active": ativos}
+
+def _numeros_de_produtor(user_id, proximos):
+    db = supabase_service.supabase
+    eventos = db.table("event").select("id, start_time, status").eq("organizer_id", user_id).execute().data or []
+    if not eventos:
+        return None
+    agora = _agora()
+    realizados = [e["id"] for e in eventos if e["start_time"] < agora and e["status"] in ("PUBLISHED", "DONE")]
+    pessoas = 0
+    if realizados:
+        pessoas = len(db.table("event_attendance").select("user_id").in_("event_id", realizados).execute().data or [])
+    return {"events_done": len(realizados), "people_attended": pessoas, "events_upcoming": proximos}
+
 def perfil_publico(user_id, quem_ve_id):
     pessoa = _pessoa(user_id)
     if not pessoa:
@@ -89,12 +161,20 @@ def perfil_publico(user_id, quem_ve_id):
     }
     eventos = [e for e in evento_service.listar_publicados(quem_ve_id) if (e.get("organizer") or {}).get("user_id") == user_id]
 
+    escritas = _avaliacoes_escritas(user_id)
+    viajante = _numeros_de_viajante(user_id)
+    viajante["reviews_written"] = (
+        supabase_service.supabase.table("tour_review").select("id", count="exact").eq("user_id", user_id).limit(1).execute().count or 0
+    )
+    tem_cara_de_viajante = pessoa["role"] == "TOURIST" or viajante["trips"] or viajante["events_attended"]
+
     return {
         "user_id": pessoa["user_id"],
         "first_name": pessoa["first_name"],
         "last_name": pessoa["last_name"],
         "photo": pessoa["photo"],
         "role": pessoa["role"],
+        "bio": pessoa.get("bio"),
         "member_since": pessoa["created_at"],
         "is_me": pessoa["user_id"] == quem_ve_id,
         "rating": _nota_geral(todos_os_passeios),
@@ -102,5 +182,10 @@ def perfil_publico(user_id, quem_ve_id):
         "tours": passeios,
         "events": eventos,
         "reviews_received": _avaliacoes_recebidas(todos_os_passeios),
-        "reviews_written": _avaliacoes_escritas(user_id),
+        "reviews_written": escritas,
+        "stats": {
+            "traveler": viajante if tem_cara_de_viajante else None,
+            "guide": _numeros_de_guia(todos_os_passeios, len(passeios)),
+            "promoter": _numeros_de_produtor(user_id, len(eventos)),
+        },
     }

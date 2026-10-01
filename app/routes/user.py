@@ -5,7 +5,8 @@ from app.utils.auth import token_required
 
 user_bp = Blueprint('user', __name__)
 
-CAMPOS_EDITAVEIS = ("first_name", "last_name", "phone")
+CAMPOS_EDITAVEIS = ("first_name", "last_name", "phone", "bio")
+TAMANHO_DO_SOBRE_MIM = 300
 CAMPOS_OBRIGATORIOS = {"first_name": "Conta pra gente seu nome", "last_name": "Conta pra gente seu sobrenome"}
 
 def _foto_atual(user_id):
@@ -30,6 +31,10 @@ def update_me(current_user):
     data = request.get_json() or {}
     changes = {campo: str(data[campo]).strip() for campo in CAMPOS_EDITAVEIS if campo in data and data[campo] is not None}
     erros = {campo: mensagem for campo, mensagem in CAMPOS_OBRIGATORIOS.items() if campo in changes and not changes[campo]}
+    if len(changes.get("bio", "")) > TAMANHO_DO_SOBRE_MIM:
+        erros["bio"] = f"Use até {TAMANHO_DO_SOBRE_MIM} caracteres"
+    if "bio" in changes and not changes["bio"]:
+        changes["bio"] = None
     if erros:
         return jsonify({"error": "Confira os campos destacados", "fields": erros}), 400
     if not changes:

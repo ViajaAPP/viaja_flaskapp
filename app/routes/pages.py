@@ -247,7 +247,7 @@ def chat(current_user):
 @token_required
 def profile(current_user):
     try:
-        user_response = supabase.table("user").select("first_name, last_name, email, phone, photo, role").eq("user_id", current_user['user_id']).execute()
+        user_response = supabase.table("user").select("first_name, last_name, email, phone, photo, role, bio").eq("user_id", current_user['user_id']).execute()
         if not user_response.data:
             return jsonify({"error": "Usuário não encontrado"}), 404
         perfil = user_response.data[0]
