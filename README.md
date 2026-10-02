@@ -1,287 +1,239 @@
-# README — API Flask (`viaja_flaskapp`)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ViajaAPP/viaja-front/staging/src/app/pages/welcome/logo.png" width="180" alt="Viajá">
+</p>
 
-## Grupo
-- Daniel Ferreira Pinheiro da Silva
-- Érika Maria de Sousa
-- Giovanna Nassar Lara Santos
-- Marcos Rebouças Duarte da Silva
-- Sophia Verardo de Araújo
+<h3 align="center">API do Viajá</h3>
 
-## Visão geral
-Esta API foi construída com **Flask** e organizada para facilitar:
-- execução em outros ambientes;
-- evolução de **modelos** e **rotas**;
-- separação de responsabilidades por camadas.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white" alt="Flask">
+  <img src="https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/Pydantic-2-E92063?logo=pydantic&logoColor=white" alt="Pydantic">
+  <img src="https://img.shields.io/badge/WebSocket-chat-010101?logo=socketdotio&logoColor=white" alt="WebSocket">
+  <img src="https://img.shields.io/badge/Redis-cache-DC382D?logo=redis&logoColor=white" alt="Redis">
+  <img src="https://img.shields.io/badge/Docker-banco%20local-2496ED?logo=docker&logoColor=white" alt="Docker">
+</p>
 
----
+O Viajá liga quem quer conhecer um lugar a quem mora lá e sabe mostrar. Esta é a API: contas, passeios, reservas, eventos, chat e avaliações. O app fica no [viaja-front](https://github.com/ViajaAPP/viaja-front).
 
-## Requisitos
-- Python **3.9+**
-- `pip`
-- Git. No Windows, rode os scripts `.sh` pelo Git Bash.
-- Node.js, porque o banco local sobe com o `npx supabase`.
-- Docker aberto, que é onde o banco local roda.
-- Google Cloud SDK (`gcloud`), só se você for usar as chaves de produção: https://cloud.google.com/sdk/docs/install
+A versão que está valendo fica na branch `staging`.
 
 ---
 
-## O que a API faz hoje
-A versão que está funcionando fica na branch `staging`. É ela que você deve usar.
+## O que você precisa ter
 
-- **Contas e papéis.** Quem se cadastra entra como viajante (`TOURIST`), guia (`GUIDE`) ou produtor de eventos (`EVENT_PROMOTER`). O `ADMIN` não aparece no cadastro. As regras de quem pode o quê ficam em `app/utils/auth.py`.
-- **Passeios.** O guia cria o passeio, coloca fotos, endereço e datas, e escolhe quantas vagas tem e o mínimo de pessoas para sair. Rascunho só aparece para o próprio guia e para o admin.
-- **Pedidos e reservas.** O viajante pede uma vaga e o guia aceita ou recusa. Se o guia não responder em 24 horas, o pedido vence sozinho. O guia também pode ligar a reserva instantânea, e aí a vaga já sai confirmada. Quando a última vaga é preenchida, a data fica lotada.
-- **Busca e recomendação.** A busca acha passeio e destino do Brasil inteiro desde a primeira letra. Dá para filtrar só os grátis ou por data, e ordenar por nota, preço ou distância. O "Para você" monta a ordem pelo que a pessoa já procurou e reservou (`app/services/busca_service.py`).
-- **Avaliações.** Quem foi ao passeio dá nota e escreve como foi. O passeio mostra a média e quanto tempo o guia costuma levar para responder.
-- **Avisos.** O app avisa quando um pedido é aceito, recusado ou vence, e quando um evento muda.
-- **Eventos.** Só quem se cadastrou como produtor de eventos cria evento, e ele só aparece depois que um admin aprova. Se o admin recusar, precisa dizer o motivo.
-- **Endereço e mapa.** A busca de endereço usa o Photon, que é gratuito e não precisa de chave. As cidades vêm da CidadesBR-API (veja mais abaixo).
-- **Cache.** As respostas que mais se repetem ficam guardadas por alguns minutos, no Redis quando ele existe e na memória quando não existe. Qualquer mudança em passeio, pedido, favorito ou evento limpa o que estava guardado.
-- **E-mail.** Serve para recuperar a senha. Sai por uma conta do Gmail com senha de app.
+| Programa | Para quê |
+| --- | --- |
+| [Python](https://www.python.org/downloads/) 3.9 ou mais novo | rodar a API. A gente usa a 3.14 |
+| [Node.js](https://nodejs.org/) 20 ou mais novo | o `npx` que sobe o banco local |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) aberto | é onde o banco local roda |
+| [Git](https://git-scm.com/downloads) | no Windows ele traz o **Git Bash**, que é o terminal usado aqui |
 
-As rotas estão todas documentadas em `/docs`, com a API rodando.
+> No Windows, faça tudo no **Git Bash**, do começo ao fim. O PowerShell não roda os scripts `.sh` e, se você trocar de terminal no meio, o ambiente do Python fica para trás.
 
 ---
 
-## Como reproduzir a API em outro computador
+## Rodar na sua máquina
 
-## 1) Clonar o projeto
+São seis passos, sem chave nenhuma. O banco sobe no seu computador, já com tabelas e dados de teste.
+
+### 1. Clone o projeto
+
 ```bash
 git clone https://github.com/ViajaAPP/viaja_flaskapp.git
 cd viaja_flaskapp
 git checkout staging
 ```
 
-Se você clonou antes de 29/09/2026, apague a pasta e clone de novo. Reescrevemos o histórico para tirar umas chaves que tinham ido parar no README, e um push vindo de um clone antigo traz essas chaves de volta.
+### 2. Crie o ambiente do Python
 
-## 2) Criar e ativar ambiente virtual
-### Windows (PowerShell)
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
+No Git Bash (Windows):
 
-### Linux/macOS
 ```bash
 python -m venv .venv
+source .venv/Scripts/activate
+```
+
+No Linux ou macOS:
+
+```bash
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-## 3) Instalar dependências
+O nome `(.venv)` aparece no começo da linha. Toda vez que abrir um terminal novo, rode o `source` de novo.
+
+### 3. Instale as dependências
+
 ```bash
 pip install -r requirements.txt
 ```
 
-## 4) Rodar tudo na sua máquina, sem chave nenhuma
-Esse é o jeito mais fácil de começar. Com o Docker aberto, o Supabase sobe na sua máquina já com as tabelas e uns dados de teste:
+### 4. Suba o banco local
+
+Com o Docker aberto:
+
 ```bash
-npx supabase start
+npx -y supabase start
+```
+
+Na primeira vez ele baixa as imagens e demora alguns minutos. Quando termina, mostra uma lista de endereços.
+
+### 5. Crie o arquivo de ambiente local
+
+```bash
 bash scripts/secrets.sh local
+```
+
+Ele escreve o `.env` apontando para o banco que acabou de subir.
+
+### 6. Suba a API
+
+```bash
 python run.py --local
 ```
 
-Pronto, aí você tem:
-- a API em `http://localhost:5000`, com a documentação em `/docs`;
-- o WebSocket do chat em `ws://localhost:8765`;
-- o painel do banco em `http://localhost:54323`.
+### Deu certo?
 
-Para entrar no app, use uma das contas de teste. A senha de todas é `viaja123`:
-- `guia@viaja.local`: a Fabi, guia com passeios publicados;
-- `viajante@viaja.local`: o Tito, que reserva passeios;
-- `admin@viaja.local`: quem modera e aprova os eventos;
-- `produtor@viaja.local`: a Lia, que cadastra eventos.
+Abra [http://localhost:5000/docs](http://localhost:5000/docs). Se aparecer a lista de rotas, está tudo rodando.
 
-Se você bagunçar os dados e quiser voltar ao começo, rode `npx supabase db reset`.
+| O quê | Onde |
+| --- | --- |
+| API | http://localhost:5000 |
+| Documentação das rotas | http://localhost:5000/docs |
+| Chat | `ws://localhost:8765` e `ws://localhost:5000/ws` |
+| Painel do banco | http://localhost:54323 |
 
-No front, o `npm start` já procura a API em `http://localhost:5000`, então não precisa configurar nada.
+Agora suba o front seguindo o [README do viaja-front](https://github.com/ViajaAPP/viaja-front/tree/staging#readme). Ele já procura a API em `localhost:5000`.
 
-Mesmo rodando local, a busca de cidade usa a CidadesBR-API que está no ar. Se ela estiver dormindo, a primeira busca pode levar quase um minuto.
+---
 
-### Testar o e-mail sem mandar e-mail de verdade
-O Mailpit pega os e-mails que a API manda e mostra numa página:
-```bash
-docker run -d --name viaja-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
-```
-Acrescente `SMTP_HOST=localhost`, `SMTP_PORT=1025` e `SMTP_FROM=teste@viaja.local` no `.env` e reinicie a API. Os e-mails aparecem em `http://localhost:8025`. Sem essas variáveis, a API simplesmente não manda e-mail.
+## Local ou produção
 
-## 5) Rodar com o banco de produção
-As chaves de produção não ficam no repositório. Elas ficam no arquivo `viaja-backend.env`, guardado no Google Drive da Erika, e o `scripts/secrets.sh` baixa esse arquivo e monta o seu `.env`. Não precisa de faturamento no Google Cloud.
+O que decide o banco é o `.env`, e quem escreve o `.env` é o `secrets.sh`. Para trocar de modo, rode o `secrets.sh` do modo que você quer e suba a API de novo.
 
-### Como pegar as chaves
-1. **Peça acesso para a Erika.** Ela compartilha o `viaja-backend.env` com o seu e-mail do Google. A Sophia, o Marcos e a Giovanna já têm acesso.
-2. **Instale o `gcloud` e entre com esse mesmo e-mail**, liberando o acesso ao Drive:
+| Modo | Comandos | Banco |
+| --- | --- | --- |
+| Local | `bash scripts/secrets.sh local` e `python run.py --local` | Supabase na sua máquina, com dados de teste |
+| Produção | `bash scripts/secrets.sh pull` e `python run.py` | Supabase de produção, com dados reais |
+
+O `.env` fica fora do git. Antes de subir a API, confira em qual modo ele está, para não gravar na produção achando que está no local.
+
+### Contas de teste
+
+No modo local, a senha de todas é `viaja123`:
+
+| E-mail | Quem é |
+| --- | --- |
+| `guia@viaja.local` | a Fabi, guia com passeios publicados |
+| `viajante@viaja.local` | o Tito, que reserva passeios |
+| `produtor@viaja.local` | a Lia, que cadastra eventos |
+| `admin@viaja.local` | quem modera e aprova os eventos |
+
+Bagunçou os dados? `npx -y supabase db reset` volta tudo ao começo.
+
+### Usar a produção
+
+As chaves de produção não ficam no repositório. Elas estão no arquivo `viaja-backend.env`, no Google Drive da Erika.
+
+1. Peça para a Erika compartilhar o arquivo com o seu e-mail do Google.
+2. Instale o [gcloud](https://cloud.google.com/sdk/docs/install) e entre com esse e-mail:
    ```bash
    gcloud auth login --enable-gdrive-access
    ```
-   Se você já usa o `gcloud` com outra conta, do trabalho por exemplo, crie uma configuração só para o Viajá antes de entrar. O script usa ela sozinho:
+   Se você já usa o gcloud com outra conta, crie uma configuração só para o Viajá antes. O script usa ela sozinho:
    ```bash
    gcloud config configurations create viaja --no-activate
    CLOUDSDK_ACTIVE_CONFIG_NAME=viaja gcloud auth login --enable-gdrive-access
    ```
-3. **Baixe as chaves e suba a API:**
+3. Baixe as chaves e suba a API:
    ```bash
    bash scripts/secrets.sh pull
    python run.py
    ```
 
-Depois do `pull`, o seu `.env` fica com estas variáveis:
-
-| Variável | Para que serve |
-| --- | --- |
-| `SUPABASE_URL`, `SUPABASE_KEY` | entrar no banco de produção |
-| `AUTH_CRYPT_KEY` | assinar o token de login do app |
-| `NGROK_API_TOKEN`, `NGROK_WS_TOKEN` | abrir os túneis da API e do WebSocket |
-| `FLASK_ENV` | modo do Flask |
-| `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` | aplicar migrations no banco de produção |
-| `CIDADESBR_API_URL` | endereço da CidadesBR-API. Se faltar, o back usa `https://cidadesbr-api.onrender.com` |
-| `CIDADESBR_ADMIN_API_KEY` | ver quanto a CidadesBR-API está sendo usada. O back não usa |
-| `CONTAS_TESTE_SENHA` | senha das contas de teste na produção. O back também não usa |
-
-Algumas variáveis têm um valor padrão e só precisam ir no `.env` se você quiser trocar:
-
-| Variável | Para que serve |
-| --- | --- |
-| `APP_URL` | endereço do front, usado no link do e-mail de trocar a senha. Padrão: `http://localhost:4200` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | de onde sai o e-mail. Padrão: Gmail na porta 587 |
-| `PHOTON_URL` | busca de endereço. Padrão: `https://photon.komoot.io` |
-| `REDIS_URL` | cache no Redis. Sem ela, o cache fica na memória da API |
-| `CORS_ORIGINS`, `PUBLIC_URL_WS` | quem pode chamar a API e onde fica o WebSocket |
-
-O `.env` nunca vai para o git. Para voltar ao banco local, rode `bash scripts/secrets.sh local`.
-
-### Contas de teste na produção
-A produção tem as mesmas contas de teste do modo local, inclusive a da Lia, mas a senha **não** é `viaja123`. É a `CONTAS_TESTE_SENHA` que o `pull` colocou no seu `.env`:
-```bash
-grep CONTAS_TESTE_SENHA .env
-```
-
-### Trocar ou acrescentar uma chave
-Só quem pode editar o arquivo no Drive consegue fazer isso:
-- `bash scripts/secrets.sh set SUPABASE_KEY` troca uma chave. Você cola o valor no terminal e ele não aparece na tela.
-- `bash scripts/secrets.sh push <arquivo>` manda um `.env` inteiro.
-- `bash scripts/secrets.sh gerar` cria uma `AUTH_CRYPT_KEY` aleatória, se ainda não tiver uma.
-
-### Banco de produção
-Toda mudança na estrutura do banco vira um arquivo em `supabase/migrations`, com a data no nome. A primeira, `schema_inicial`, só descreve o banco que já existia. Depois dela vieram as fotos, os favoritos, a troca de senha, a localização dos endereços, as avaliações, os avisos, a reserva instantânea com mínimo de pessoas e os eventos. Todas já estão em produção.
-
-Para aplicar as que faltam:
-```bash
-npx supabase link --project-ref <SUPABASE_PROJECT_REF>
-npx supabase db push
-```
-
-### CidadesBR-API
-É uma API com todos os municípios do Brasil, feita para o Viajá: nome, UF, coordenadas e código do IBGE. Ela está no ar em `https://cidadesbr-api.onrender.com`, com a documentação em `/docs`.
-
-- O back chama a API em `app/services/cidades_service.py`. Ele espera até 60 segundos e guarda cada resposta por 24 horas. Assim, o Render dormindo e o limite de 60 chamadas por minuto quase não aparecem para quem usa o app.
-- Para ver quanto a API está sendo usada, com a `CIDADESBR_ADMIN_API_KEY` no `.env`:
-  ```bash
-  source .env && curl -H "X-Admin-Key: $CIDADESBR_ADMIN_API_KEY" "$CIDADESBR_API_URL/admin/usage"
-  ```
-
-### Publicar no Render
-O `render.yaml` já deixa tudo pronto para publicar de graça no Render: a API com o gunicorn e um Redis para o cache. Ainda não publicamos, porque falta registrar o domínio `viaja-app.com.br`. As chaves entram pelo painel do Render, nunca pelo arquivo.
-
-### Quando algo dá errado
-| Mensagem | O que fazer |
-| --- | --- |
-| `Sem login no Google. Rode: gcloud auth login --enable-gdrive-access` | Faça o login do passo 2. Se você criou a configuração `viaja`, coloque `CLOUDSDK_ACTIVE_CONFIG_NAME=viaja` na frente do comando. |
-| `Não achei 'viaja-backend.env' no seu Drive` | O arquivo ainda não foi compartilhado com você, ou você entrou com outro e-mail. Confira com `gcloud auth list`. |
-| `Não conheço '<NOME>'` | Essa variável não está na lista do `scripts/secrets.sh`. A própria mensagem mostra as que existem. |
-| `O Supabase local não está rodando` | Abra o Docker e rode `npx supabase start`. |
-| `bash: scripts/secrets.sh: No such file or directory` | Você está fora da pasta `viaja_flaskapp`. No Windows, use o Git Bash. |
-| A busca de cidade demora na primeira vez | É a CidadesBR-API acordando no Render. Depois disso as respostas saem do cache. |
+Na produção, as contas de teste existem, mas a senha é a `CONTAS_TESTE_SENHA` que o `pull` colocou no `.env`.
 
 ---
 
-## Estrutura sugerida do projeto
+## Quando algo dá errado
+
+| O que aparece | O que fazer |
+| --- | --- |
+| `bash: scripts/secrets.sh: No such file or directory` | Você está fora da pasta `viaja_flaskapp`, ou no PowerShell. Use o Git Bash. |
+| `ModuleNotFoundError` ao rodar o `run.py` | O ambiente do Python não está ativo. Rode o `source` do passo 2. |
+| `O Supabase local não está rodando` | Abra o Docker e rode `npx -y supabase start`. |
+| `Cannot connect to the Docker daemon` | O Docker Desktop está fechado. Abra e espere ele terminar de iniciar. |
+| `Sem login no Google` | Faça o login do passo 2 de "Usar a produção". |
+| `Não achei 'viaja-backend.env' no seu Drive` | O arquivo ainda não foi compartilhado com você, ou você entrou com outro e-mail. Confira com `gcloud auth list`. |
+| A busca de cidade demora na primeira vez | É a CidadesBR-API acordando no Render. Depois as respostas saem do cache. |
+
+---
+
+## O que a API faz
+
+- **Contas e papéis.** Quem se cadastra entra como viajante, guia ou produtor de eventos. O admin não aparece no cadastro. As regras de quem pode o quê ficam em `app/utils/auth.py`.
+- **Passeios.** O guia cria o passeio com fotos, endereço e datas, e escolhe as vagas e o mínimo de pessoas para sair.
+- **Pedidos e reservas.** O viajante pede uma vaga e o guia aceita ou recusa. Sem resposta em 24 horas, o pedido vence sozinho. Com a reserva instantânea ligada, a vaga já sai confirmada.
+- **Busca e recomendação.** Acha passeio e destino do Brasil inteiro desde a primeira letra, com filtros de preço, data e distância. O "Para você" aprende com o que a pessoa procura e reserva.
+- **Eventos.** Só o produtor cria, e o evento só aparece depois que um admin aprova.
+- **Chat.** Cada data de passeio e cada evento tem o seu grupo, com localização ao vivo perto da hora.
+- **Avaliações e avisos.** Nota e comentário depois do passeio, e aviso quando um pedido é aceito, recusado ou vence.
+
+## Serviços que a API usa
+
+| Serviço | Para quê |
+| --- | --- |
+| [Supabase](https://supabase.com/) | banco de dados e login |
+| [CidadesBR-API](https://github.com/zerikazz/CidadesBR-API) | municípios do Brasil com coordenadas |
+| [Photon](https://photon.komoot.io/) | busca de endereço, sem chave |
+| [BrasilAPI](https://brasilapi.com.br/) | conferir o CNPJ do produtor de eventos |
+| Redis | cache. Sem ele, o cache fica na memória |
+
+## Variáveis de ambiente
+
+O `secrets.sh` escreve o `.env` sozinho. Esta tabela é só para saber o que cada uma faz.
+
+| Variável | Para quê |
+| --- | --- |
+| `SUPABASE_URL`, `SUPABASE_KEY` | entrar no banco |
+| `AUTH_CRYPT_KEY` | assinar o token de login |
+| `DADOS_CRYPT_KEY` | cifrar os dados pessoais guardados no banco |
+| `PUBLIC_URL_WS` | onde o app encontra o chat |
+| `CIDADESBR_API_URL` | endereço da CidadesBR-API |
+| `APP_URL` | endereço do front, usado no e-mail de trocar a senha |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | de onde sai o e-mail |
+| `REDIS_URL` | cache no Redis |
+| `CORS_ORIGINS` | quem pode chamar a API |
+
+## Como o projeto está organizado
+
 ```text
 viaja_flaskapp/
-├─ app/
-│  ├─ __init__.py          # factory da aplicação
-│  ├─ config.py            # configurações por ambiente
-│  ├─ models/              # entidades do banco
-│  ├─ routes/              # blueprints/endpoints
-│  ├─ services/            # regras de negócio
-│  ├─ utils/auth.py        # login e quem pode o quê
-├─ scripts/
-│  ├─ secrets.sh           # baixa e troca as chaves
-│  ├─ semear_passeios.py   # coloca os passeios de exemplo no banco
-├─ supabase/
-│  ├─ migrations/          # estrutura do banco
-│  ├─ dados/passeios.json  # os passeios de exemplo
-│  ├─ seed.sql             # dados de teste do banco local
-├─ render.yaml             # como publicar no Render
-├─ requirements.txt
-└─ README.md
+├── app/
+│   ├── models/        entidades do banco
+│   ├── routes/        rotas da API
+│   ├── services/      regras de negócio
+│   └── utils/auth.py  login e quem pode o quê
+├── scripts/
+│   ├── secrets.sh     monta o .env
+│   ├── semear_passeios.py
+│   └── semear_eventos.py
+├── supabase/
+│   ├── migrations/    estrutura do banco
+│   └── seed.sql       dados de teste do modo local
+├── config.py          configurações lidas do ambiente
+├── run.py             sobe a API e o chat
+└── render.yaml        como publicar no Render
 ```
 
----
+Toda mudança na estrutura do banco vira um arquivo em `supabase/migrations`. Para levar as que faltam para a produção:
 
-## Como visualizar as rotas disponíveis
-1. Iniciar a API.
-2. Acessar a URL informada pelo serviço do NGROK (ex.: `https://abc123.ngrok.io`).
-3. Adicionar `/docs` para acessar a documentação interativa (ex.: `https://abc123.ngrok.io/docs`).
-
-Nela, você pode testar os endpoints diretamente pela interface, visualizar os parâmetros esperados e as respostas.
-
----
-
-## Como adicionar novos modelos
-
-1. Criar arquivo em `app/models/` (ex.: `destino.py`).
-2. Definir a classe do modelo.
-3. Registrar/importar o modelo onde necessário.
-
----
-
-## Como adicionar novas rotas
-
-1. Criar blueprint em `app/routes/` (ex.: `destinos.py`).
-2. Definir endpoints e métodos HTTP.
-3. Registrar blueprint no `create_app()`.
-
-Exemplo:
-```python
-# app/routes/destinos.py
-from flask import Blueprint, jsonify
-bp = Blueprint("destinos", __name__, url_prefix="/destinos")
-
-@bp.get("/")
-def listar_destinos():
-    return jsonify([])
+```bash
+npx -y supabase link --project-ref <SUPABASE_PROJECT_REF>
+npx -y supabase db push
 ```
 
-Registro:
-```python
-# app/__init__.py
-from app.routes.destinos import bp as destinos_bp
-app.register_blueprint(destinos_bp)
-```
+## Grupo
 
----
-
-## Serviços Utilizados e Criados
-
-- **Supabase**: banco de dados e autenticação.
-- **Ngrok**: exposição local para testes externos.
-- **Flask**: framework web leve e flexível.
-- **BrasilAPI**: validação de CNPJ para promotores de eventos.
-- **Pydantic**: validação e parsing de dados.
-- **Message Worker (Criado)**: processamento assíncrono de mensagens (ex.: fila de mensagens do chat).
-
----
-
-## Design patterns de arquitetura usados
-
-- **Application Factory**: inicialização do Flask via função `create_app()`.
-- **Blueprints**: modularização de rotas por domínio.
-- **DTO/Schema**: validação e serialização de dados.
-
----
-
-## Contribuição
-1. Criar branch de feature.
-2. Implementar com testes.
-3. Abrir Pull Request com descrição objetiva.
-4. Aguardar revisão.
+Daniel Ferreira Pinheiro da Silva, Érika Maria de Sousa, Giovanna Nassar Lara Santos, Marcos Rebouças Duarte da Silva e Sophia Verardo de Araújo.
