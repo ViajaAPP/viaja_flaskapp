@@ -1,0 +1,98 @@
+[
+  {
+    "title": "Luau na praia do Gonzaga",
+    "description": "Fogueira na areia, voz e violão e o barulho do mar de fundo. Leve sua canga e chegue cedo para pegar lugar perto da roda. Tem pipoca e chá quente de graça para quem chegar até as 20h.",
+    "city": "Santos",
+    "place_name": "Praia do Gonzaga, em frente ao canal 3",
+    "address": {"street": "Avenida Bartolomeu de Gusmão", "neighborhood": "Gonzaga", "number": "S/N"},
+    "lat": -23.96789, "lon": -46.33315,
+    "dias": 3, "hora": "19:30", "duracao_horas": 3,
+    "price": 0, "capacity": null, "vao": 7,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Fogueira_de_Lume_Novo.jpg/1280px-Fogueira_de_Lume_Novo.jpg",
+    "image_author": "Alberto Garcia", "image_license": "CC BY-SA 2.0"
+  },
+  {
+    "title": "Roda de samba no Valongo",
+    "description": "Samba de raiz no largo em frente à estação do Valongo, com a turma tocando no meio do povo. Pandeiro, cavaquinho e muita gente cantando junto. Tem caldo e cerveja gelada nas barracas em volta.",
+    "city": "Santos",
+    "place_name": "Largo Marquês de Monte Alegre",
+    "address": {"street": "Largo Marquês de Monte Alegre", "neighborhood": "Valongo", "number": "S/N"},
+    "lat": -23.93226, "lon": -46.32513,
+    "dias": 9, "hora": "16:00", "duracao_horas": 5,
+    "price": 0, "capacity": null, "vao": 6,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Samba_roubado%2C_samba_rural%2C_samba_p%C3%A9_de_parede%2C_samba_chula%2C_chula_e_batuque%2C_samba_catingueiro%2C_samba_sertanejo.jpg/1280px-Samba_roubado%2C_samba_rural%2C_samba_p%C3%A9_de_parede%2C_samba_chula%2C_chula_e_batuque%2C_samba_catingueiro%2C_samba_sertanejo.jpg",
+    "image_author": "Bahiense.7", "image_license": "CC0"
+  },
+  {
+    "title": "Cinema na areia do Gonzaguinha",
+    "description": "Telão na praia, pufes na areia e um clássico brasileiro para ver de pé no chão. Leve seu cobertor. A pipoca é por conta da casa e a sessão começa assim que o sol se põe.",
+    "city": "São Vicente",
+    "place_name": "Praia do Gonzaguinha",
+    "address": {"street": "Avenida Embaixador Pedro de Toledo", "neighborhood": "Centro", "number": "S/N"},
+    "lat": -23.96949, "lon": -46.38608,
+    "dias": 5, "hora": "18:30", "duracao_horas": 3,
+    "price": 0, "capacity": 150, "vao": 5,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sunset_Cinema%2C_Sutton_%28Surrey%29%2C_Greater_London.jpg/1280px-Sunset_Cinema%2C_Sutton_%28Surrey%29%2C_Greater_London.jpg",
+    "image_author": "Enjoy Sutton by Successful Sutton", "image_license": "CC BY-SA 2.0"
+  },
+  {
+    "title": "Pôr do sol com voz e violão na Ilha Porchat",
+    "description": "O fim de tarde mais bonito da Baixada, lá do alto da Ilha Porchat, com música acústica ao vivo enquanto o céu fica laranja. Dá para ver Santos e São Vicente inteiras. Chegue meia hora antes para garantir o melhor cantinho.",
+    "city": "São Vicente",
+    "place_name": "Mirante da Ilha Porchat",
+    "address": {"street": "Alameda Paulo Gonçalves", "neighborhood": "Ilha Porchat", "number": "S/N"},
+    "lat": -23.97727, "lon": -46.37028,
+    "dias": 2, "hora": "17:00", "duracao_horas": 2,
+    "price": 25, "capacity": 60, "vao": 8,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg/1280px-Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg",
+    "image_author": "Leodb", "image_license": "CC BY-SA 3.0"
+  },
+  {
+    "title": "Festival de música na orla do Boqueirão",
+    "description": "Palco montado de frente pro mar, com bandas da região tocando pop, reggae e axé até tarde. Tem praça de alimentação, área para as crianças e telão. Vá de branco e prepare a voz.",
+    "city": "Praia Grande",
+    "place_name": "Orla do Boqueirão",
+    "address": {"street": "Avenida Presidente Castelo Branco", "neighborhood": "Boqueirão", "number": "S/N"},
+    "lat": -24.00924, "lon": -46.41322,
+    "dias": 11, "hora": "18:00", "duracao_horas": 6,
+    "price": 40, "capacity": 800, "vao": 8,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Beach-Please-2022-crowd-stage-lights-night-performance.jpg/1280px-Beach-Please-2022-crowd-stage-lights-night-performance.jpg",
+    "image_author": "PinkBeachPlanet", "image_license": "CC BY-SA 4.0"
+  },
+  {
+    "title": "Festival gastronômico do Canto do Forte",
+    "description": "Mais de 30 barracas com frutos do mar, pastel de camarão, comida japonesa e doces caseiros, tudo debaixo de luzinhas e com música ao vivo. Vale ir com fome e com a turma toda.",
+    "city": "Praia Grande",
+    "place_name": "Praça do Canto do Forte",
+    "address": {"street": "Avenida Presidente Castelo Branco", "neighborhood": "Canto do Forte", "number": "S/N"},
+    "lat": -24.00167, "lon": -46.40142,
+    "dias": 6, "hora": "17:00", "duracao_horas": 6,
+    "price": 0, "capacity": null, "vao": 6,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/DFC_4864_Night_market_vibes_at_Ban_Nong_Hin_crowds_food_stalls_and_live_music_bring_the_street_to_life_under_strings_of_lights.jpg/1280px-DFC_4864_Night_market_vibes_at_Ban_Nong_Hin_crowds_food_stalls_and_live_music_bring_the_street_to_life_under_strings_of_lights.jpg",
+    "image_author": "PattayaPatrol", "image_license": "CC BY-SA 4.0"
+  },
+  {
+    "title": "Feira noturna de artesanato de Bertioga",
+    "description": "Peças feitas à mão por artesãos da cidade, cerâmica, roupas de praia, bijuteria e comidinhas, tudo iluminado por varais de luz. Um passeio gostoso para fazer depois da praia, com música ambiente.",
+    "city": "Bertioga",
+    "place_name": "Praça Vicente Molinari",
+    "address": {"street": "Rua Luiz Pereira de Campos", "neighborhood": "Centro", "number": "S/N"},
+    "lat": -23.85461, "lon": -46.13913,
+    "dias": 4, "hora": "18:00", "duracao_horas": 4,
+    "price": 0, "capacity": null, "vao": 4,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/DFC_2582_A_bustling_night_market_filled_with_vendors_and_shoppers_under_strings_of_lights_and_fabric_canopies.jpg/1280px-DFC_2582_A_bustling_night_market_filled_with_vendors_and_shoppers_under_strings_of_lights_and_fabric_canopies.jpg",
+    "image_author": "PattayaPatrol", "image_license": "CC BY-SA 4.0"
+  },
+  {
+    "title": "Noite de rock na praia da Enseada",
+    "description": "Três bandas tocando clássicos do rock nacional e internacional num palco pé na areia. Luz, som caprichado e aquele refrão que todo mundo sabe. Os ingressos são limitados, então não deixe para a última hora.",
+    "city": "Bertioga",
+    "place_name": "Praia da Enseada",
+    "address": {"street": "Avenida Tomé de Souza", "neighborhood": "Enseada", "number": "S/N"},
+    "lat": -23.83676, "lon": -46.12181,
+    "dias": 13, "hora": "20:00", "duracao_horas": 4,
+    "price": 60, "capacity": 300, "vao": 7,
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Musicians_performing_on_stage_at_a_night_concert_featuring_vibrant_lights_and_energetic_atmosphere.jpg/1280px-Musicians_performing_on_stage_at_a_night_concert_featuring_vibrant_lights_and_energetic_atmosphere.jpg",
+    "image_author": "Shixart1985", "image_license": "CC BY 2.0"
+  }
+]
