@@ -93,7 +93,7 @@ def agenda_do_guia(guia_id):
 def viagens_do_viajante(user_id):
     expirar_pedidos()
     pedidos = supabase.table("tour_request") \
-        .select("id, status, message, created_at, tour_instance(id, start_time, status, max_capacity, tour(id, title, photo, price, meeting_point, created_by_id, min_participants))") \
+        .select("id, status, message, created_at, tour_instance(id, start_time, status, max_capacity, tour(id, title, photo, price, meeting_point, created_by_id, min_participants, estimated_duration_minutes))") \
         .eq("requester_id", user_id).order("created_at", desc=True).execute().data or []
     guias = _pessoas({(p.get("tour_instance") or {}).get("tour", {}).get("created_by_id") for p in pedidos} - {None})
     instancias = [p["tour_instance"]["id"] for p in pedidos if p.get("tour_instance")]
@@ -113,6 +113,7 @@ def viagens_do_viajante(user_id):
             "instance_id": instancia["id"], "start_time": instancia["start_time"], "instance_status": instancia["status"],
             "tour_id": tour["id"], "tour_title": tour["title"], "tour_photo": tour["photo"], "price": tour["price"],
             "meeting_point": tour["meeting_point"], "guide": guias.get(tour["created_by_id"]),
+            "duration_minutes": tour.get("estimated_duration_minutes"),
             "chat_id": chat_por_instancia.get(instancia["id"]),
             "can_review": pedido["status"] == "ACCEPTED" and inicio < agora and instancia["status"] != "CANCELLED" and instancia["id"] not in avaliadas,
             "expires_at": (_data(pedido["created_at"]) + PRAZO_DE_RESPOSTA).isoformat(),
