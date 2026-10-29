@@ -35,6 +35,7 @@ def _serializar(evento, organizadores, presencas, user_id, centro=None, detalhad
         "start_time": evento["start_time"], "end_time": evento["end_time"], "price": evento["price"],
         "capacity": evento["capacity"], "place_name": evento["place_name"], "status": evento["status"],
         "city": endereco.get("city"), "uf": endereco.get("uf"), "distance_km": distancia,
+        "lat": endereco.get("lat"), "lon": endereco.get("lon"),
         "going_count": len(do_evento), "going": any(p["user_id"] == user_id for p in do_evento),
         "organizer": {"user_id": organizador.get("user_id"), "first_name": organizador.get("first_name"), "photo": organizador.get("photo")},
         "is_owner": evento["organizer_id"] == user_id,

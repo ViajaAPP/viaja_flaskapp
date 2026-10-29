@@ -202,6 +202,9 @@ def list_nearby_tours(current_user):
                 "tagType": "nearby",
                 "favorite": tour['id'] in favorite_tour_ids,
                 "distance_km": round(km, 1),
+                "lat": destino[0],
+                "lon": destino[1],
+                "price": tour.get('price'),
                 "city": endereco.get('city'),
                 "uf": endereco.get('uf')
             })

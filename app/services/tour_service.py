@@ -50,7 +50,7 @@ def list_tour_instances(tour_id):
     return response.data or []
 
 def list_published_tours_with_address():
-    response = supabase.table("tour").select("id, title, photo, created_by_id, address(city, uf, lat, lon)").eq("published", True).execute()
+    response = supabase.table("tour").select("id, title, photo, price, created_by_id, address(city, uf, lat, lon)").eq("published", True).execute()
     return response.data or []
 
 def list_published_tour_ids():
