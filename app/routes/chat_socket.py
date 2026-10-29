@@ -2,7 +2,7 @@ import json
 import threading
 from flask_sock import Sock, ConnectionClosed
 from app.utils.auth import ler_token
-from app.services import chat_service
+from app.services import chat_service, tempo_real_service
 
 sock = Sock()
 
@@ -97,3 +97,24 @@ def chat_socket(ws):
         pass
     finally:
         unsubscribe(ws)
+
+@sock.route('/ws/avisos')
+def avisos_socket(ws):
+    try:
+        dados = json.loads(ws.receive(timeout=ESPERA_DO_LOGIN) or "")
+        usuario = ler_token(str(dados.get("token") or "")) if isinstance(dados, dict) and dados.get("type") == "auth" else None
+    except Exception:
+        usuario = None
+    if not usuario:
+        ws.close(reason=1008, message="Login necessário")
+        return
+    tempo_real_service.entrar(usuario['user_id'], ws)
+    ws.send(json.dumps({"type": "ready"}))
+    try:
+        while True:
+            if ws.receive() is None:
+                break
+    except ConnectionClosed:
+        pass
+    finally:
+        tempo_real_service.sair(usuario['user_id'], ws)

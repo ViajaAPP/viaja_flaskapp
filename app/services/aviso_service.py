@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from flask import current_app
-from app.services.supabase_service import supabase
+from app.services import supabase_service, tempo_real_service
 
 FUSO = timezone(timedelta(hours=-3))
 
@@ -8,7 +8,7 @@ def _data(inicio: str) -> str:
     return datetime.fromisoformat(inicio.replace('Z', '+00:00')).astimezone(FUSO).strftime('%d/%m às %H:%M')
 
 def _primeiro_nome(user_id) -> str:
-    dados = supabase.table("user").select("first_name").eq("user_id", user_id).execute().data
+    dados = supabase_service.supabase.table("user").select("first_name").eq("user_id", user_id).execute().data
     return (dados[0]['first_name'] if dados else '') or 'Alguém'
 
 def criar(user_ids, kind: str, title: str, body: str = None, link: str = None):
@@ -16,22 +16,24 @@ def criar(user_ids, kind: str, title: str, body: str = None, link: str = None):
     if not ids:
         return
     try:
-        supabase.table("notification").insert([
+        supabase_service.supabase.table("notification").insert([
             {"user_id": user_id, "kind": kind, "title": title, "body": body, "link": link} for user_id in ids
         ]).execute()
     except Exception as e:
         current_app.logger.error(f"Erro ao criar aviso: {e}")
+        return
+    tempo_real_service.enviar(ids, {"type": "aviso", "kind": kind, "title": title, "body": body, "link": link})
 
 def listar(user_id, limite=50):
-    return supabase.table("notification").select("id, created_at, kind, title, body, link, read_at") \
+    return supabase_service.supabase.table("notification").select("id, created_at, kind, title, body, link, read_at") \
         .eq("user_id", user_id).order("created_at", desc=True).limit(limite).execute().data or []
 
 def contar_nao_lidas(user_id) -> int:
-    resposta = supabase.table("notification").select("id", count="exact").eq("user_id", user_id).is_("read_at", "null").execute()
+    resposta = supabase_service.supabase.table("notification").select("id", count="exact").eq("user_id", user_id).is_("read_at", "null").execute()
     return resposta.count or 0
 
 def marcar_lidas(user_id, ids=None):
-    query = supabase.table("notification").update({"read_at": datetime.now(timezone.utc).isoformat()}) \
+    query = supabase_service.supabase.table("notification").update({"read_at": datetime.now(timezone.utc).isoformat()}) \
         .eq("user_id", user_id).is_("read_at", "null")
     if ids:
         query = query.in_("id", ids)
@@ -63,7 +65,7 @@ def pedido_respondido(tour, instance, requester_id, aceito: bool):
               f"/passeio/{tour['id']}")
 
 def data_cancelada(tour, instance):
-    aceitos = supabase.table("tour_request").select("requester_id").eq("tour_instance_id", instance['id']) \
+    aceitos = supabase_service.supabase.table("tour_request").select("requester_id").eq("tour_instance_id", instance['id']) \
         .in_("status", ["ACCEPTED", "PENDING"]).execute().data or []
     criar([pedido['requester_id'] for pedido in aceitos], "data_cancelada", "Uma data do seu passeio foi cancelada",
           f"{tour['title']}, {_data(instance['start_time'])}. Veja se tem outra data que combine com você.",
