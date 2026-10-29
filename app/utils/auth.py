@@ -2,6 +2,7 @@ from functools import wraps
 from flask import current_app, jsonify, request
 import jwt
 from app.models.enums import UserRole
+from app.services import papel_service
 
 def ler_token(token):
     data = jwt.decode(token, current_app.config['AUTH_CRYPT_KEY'], algorithms=["HS256"])
@@ -36,7 +37,8 @@ def role_required(*roles):
         @wraps(f)
         def decorated(current_user, *args, **kwargs):
             if current_user.get('role') not in roles:
-                return jsonify({"error": "Acesso negado"}), 403
+                if not set(papel_service.aprovados(current_user['user_id'])) & {getattr(r, "value", r) for r in roles}:
+                    return jsonify({"error": "Acesso negado"}), 403
             return f(current_user, *args, **kwargs)
         return decorated
     return decorator

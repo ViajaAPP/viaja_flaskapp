@@ -6,7 +6,7 @@ import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import supabase
-from app.services import foto_service, senha_service, cripto_service
+from app.services import foto_service, senha_service, cripto_service, papel_service
 from app.services.email_service import EmailIndisponivel
 from app.models.enums import UserRole
 
@@ -161,12 +161,13 @@ def login():
         return jsonify(message="Email ou senha não conferem. Confere e tenta de novo."), 401
 
     # Gerar o token com expiração
+    extras = papel_service.aprovados(user['user_id'])
     token = jwt.encode(
-        {"user_id": user['user_id'], "role": user['role'], "exp": datetime.now(timezone.utc) + timedelta(days=30)},
+        {"user_id": user['user_id'], "role": user['role'], "extra_roles": extras, "exp": datetime.now(timezone.utc) + timedelta(days=30)},
         current_app.config['AUTH_CRYPT_KEY'],
         algorithm="HS256"
     )
-    return jsonify(token=token, user_id=user['user_id'], role=user['role']), 200
+    return jsonify(token=token, user_id=user['user_id'], role=user['role'], extra_roles=extras), 200
 
 @auth_bp.route('/esqueci-senha', methods=['POST'])
 def esqueci_senha():

@@ -1,7 +1,8 @@
 from flask import Blueprint, current_app, request, jsonify
 from app.services.supabase_service import supabase
-from app.services import foto_service, cripto_service, perfil_service
-from app.utils.auth import token_required
+from app.services import foto_service, cripto_service, perfil_service, papel_service
+from app.utils.auth import token_required, role_required
+from app.models.enums import UserRole
 
 user_bp = Blueprint('user', __name__)
 
@@ -77,3 +78,46 @@ def delete_my_photo(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao remover foto de perfil: {e}")
         return jsonify({"error": "Erro ao remover foto de perfil"}), 500
+
+@user_bp.route('/me/papeis', methods=['GET'])
+@token_required
+def meus_papeis(current_user):
+    try:
+        return jsonify({"pedidos": papel_service.meus(current_user['user_id']), "aprovados": papel_service.aprovados(current_user['user_id'])}), 200
+    except Exception as e:
+        current_app.logger.error(f"Erro ao listar papéis: {e}")
+        return jsonify({"error": "Não conseguimos carregar seus papéis agora."}), 500
+
+@user_bp.route('/me/papeis', methods=['POST'])
+@token_required
+def pedir_papel(current_user):
+    data = request.get_json(silent=True) or {}
+    try:
+        pedido = papel_service.pedir(current_user['user_id'], data.get('role'), data.get('cnpj'))
+        return jsonify(pedido), 201
+    except papel_service.PedidoInvalido as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Erro ao pedir papel: {e}")
+        return jsonify({"error": "Não conseguimos enviar seu pedido. Tente de novo."}), 500
+
+@user_bp.route('/papeis/analise', methods=['GET'])
+@token_required
+@role_required(UserRole.ADMIN)
+def papeis_para_analise(current_user):
+    return jsonify(papel_service.para_analise()), 200
+
+@user_bp.route('/papeis/<int:pedido_id>/analise', methods=['POST'])
+@token_required
+@role_required(UserRole.ADMIN)
+def analisar_papel(current_user, pedido_id):
+    pedido = papel_service.buscar(pedido_id)
+    if not pedido or pedido['status'] != 'PENDING':
+        return jsonify({"error": "Esse pedido não está mais esperando análise."}), 404
+    data = request.get_json(silent=True) or {}
+    aprovar = bool(data.get('aprovar'))
+    motivo = (data.get('motivo') or '').strip()[:500]
+    if not aprovar and not motivo:
+        return jsonify({"error": "Conte o que precisa ajustar."}), 400
+    papel_service.analisar(pedido, current_user['user_id'], aprovar, motivo)
+    return jsonify({"message": "Pedido analisado"}), 200
