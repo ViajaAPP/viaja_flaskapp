@@ -31,7 +31,7 @@ def _avaliacoes_recebidas(tour_ids):
         return []
     dados = (
         supabase_service.supabase.table("tour_review")
-        .select("id, tour_id, user_id, rating, comment, created_at")
+        .select("id, tour_id, user_id, rating, guide_rating, comment, created_at")
         .in_("tour_id", list(tour_ids))
         .order("created_at", desc=True)
         .limit(LIMITE_DE_AVALIACOES)
@@ -43,6 +43,7 @@ def _avaliacoes_recebidas(tour_ids):
     return [{
         "id": a["id"],
         "rating": a["rating"],
+        "guide_rating": a.get("guide_rating"),
         "comment": a["comment"],
         "created_at": a["created_at"],
         "tour_id": a["tour_id"],
@@ -178,6 +179,7 @@ def perfil_publico(user_id, quem_ve_id):
         "member_since": pessoa["created_at"],
         "is_me": pessoa["user_id"] == quem_ve_id,
         "rating": _nota_geral(todos_os_passeios),
+        "guide_rating": review_service.summary_for_guide(todos_os_passeios),
         "response_time": resposta_service.tempo_de_resposta(user_id) if todos_os_passeios else None,
         "tours": passeios,
         "events": eventos,

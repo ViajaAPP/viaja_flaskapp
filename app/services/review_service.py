@@ -17,7 +17,7 @@ def summary_by_tour(tour_ids=None):
     return {tour_id: {"average": round(soma / quantidade, 1), "count": quantidade} for tour_id, (soma, quantidade) in totais.items()}
 
 def list_reviews(tour_id, limit=30):
-    reviews = supabase.table("tour_review").select("id, rating, comment, created_at, user_id") \
+    reviews = supabase.table("tour_review").select("id, rating, guide_rating, comment, created_at, user_id") \
         .eq("tour_id", tour_id).order("created_at", desc=True).limit(limit).execute().data or []
     user_ids = {review['user_id'] for review in reviews}
     users = {}
@@ -27,6 +27,7 @@ def list_reviews(tour_id, limit=30):
     return [{
         "id": review['id'],
         "rating": review['rating'],
+        "guide_rating": review.get('guide_rating'),
         "comment": review['comment'],
         "created_at": review['created_at'],
         "author_id": review['user_id'],
@@ -51,11 +52,20 @@ def instance_to_review(tour_id, user_id):
     pendentes = [request['tour_instance_id'] for request in aceitas if request['tour_instance_id'] not in ja_avaliadas]
     return pendentes[0] if pendentes else None
 
-def create_review(tour_id, instance_id, user_id, rating, comment):
+def create_review(tour_id, instance_id, user_id, rating, comment, guide_rating=None):
     supabase.table("tour_review").insert({
         "tour_id": tour_id,
         "tour_instance_id": instance_id,
         "user_id": user_id,
         "rating": rating,
+        "guide_rating": guide_rating,
         "comment": comment or None,
     }).execute()
+
+def summary_for_guide(tour_ids):
+    if not tour_ids:
+        return None
+    notas = supabase.table("tour_review").select("guide_rating").in_("tour_id", list(tour_ids))         .not_.is_("guide_rating", "null").execute().data or []
+    if not notas:
+        return None
+    return {"average": round(sum(n["guide_rating"] for n in notas) / len(notas), 1), "count": len(notas)}

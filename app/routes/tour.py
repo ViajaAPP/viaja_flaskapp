@@ -577,12 +577,18 @@ def create_tour_review(current_user, tour_id):
         nota = 0
     if nota < 1 or nota > 5:
         return jsonify({"error": "Escolha uma nota de 1 a 5."}), 400
+    try:
+        nota_guia = int(data.get('guide_rating'))
+    except (TypeError, ValueError):
+        nota_guia = 0
+    if nota_guia < 1 or nota_guia > 5:
+        return jsonify({"error": "Dê também uma nota de 1 a 5 para o guia."}), 400
     comentario = (data.get('comment') or '').strip()[:1000]
     try:
         instance_id = review_service.instance_to_review(tour_id, current_user['user_id'])
         if not instance_id:
             return jsonify({"error": "Só quem foi no passeio pode avaliar, e uma vez por data."}), 403
-        review_service.create_review(tour_id, instance_id, current_user['user_id'], nota, comentario)
+        review_service.create_review(tour_id, instance_id, current_user['user_id'], nota, comentario, nota_guia)
         tour = tour_service.find_tour(tour_id)
         if tour:
             aviso_service.avaliacao_nova(tour, current_user['user_id'], nota)
